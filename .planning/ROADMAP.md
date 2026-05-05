@@ -30,11 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Chart supports crosshair, zoom, drag-to-pan, and time-axis navigation, showing OHLCV on hover
   4. Chart uses A-share color convention (red=up, green=down) with TradingView-style dark theme
   5. MA5/MA10/MA20/MA60 moving average lines are displayed on the K-line chart
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Backend: FastAPI server, SQLite database, tushare data pipeline, stock search and daily K-line API endpoints
+- [ ] 01-02-PLAN.md — Frontend: Vue 3 app, dark theme, stock search autocomplete, interactive K-line chart with volume and MA overlays, human verification
 
 ### Phase 2: Technical Indicators + Volume-Price Analysis
 **Goal**: Users can view technical indicator sub-charts and see automatic volume-price signal markers and K-line pattern annotations on the chart
@@ -106,7 +106,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation + K-Line Charting | 0/? | Not started | - |
+| 1. Data Foundation + K-Line Charting | 0/2 | Planned | - |
 | 2. Technical Indicators + Volume-Price Analysis | 0/? | Not started | - |
 | 3. Advanced Analysis Features | 0/? | Not started | - |
 | 4. Trading Practice Module | 0/? | Not started | - |
