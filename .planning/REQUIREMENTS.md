@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 2 | Pending |
 | DATA-04 | Phase 2 | Pending |
-| DATA-05 | — | Pending |
+| DATA-05 | — | Deferred to v2 (ENHANC-04) |
 | CHART-01 | Phase 1 | Pending |
 | CHART-02 | Phase 1 | Pending |
 | CHART-03 | Phase 1 | Pending |
@@ -134,8 +134,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v1 requirements: 35 total
 - Mapped to phases: 34
-- Unmapped: 1 (DATA-05 custom indicator builder, deferred to v2)
+- Deferred to v2: 1 (DATA-05 custom indicator builder -> ENHANC-04)
 
 ---
 *Requirements defined: 2026-04-30*
-*Last updated: 2026-04-30 after initial definition*
+*Last updated: 2026-04-30 after roadmap creation*
