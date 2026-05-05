@@ -7,8 +7,8 @@
 
 ### Data Management
 
-- [ ] **DATA-01**: 用户可通过股票搜索选择股票，支持代码和名称模糊匹配
-- [ ] **DATA-02**: 选择股票后自动从 tushare 拉取日 K 数据（OHLCV）存入 SQLite
+- [x] **DATA-01**: 用户可通过股票搜索选择股票，支持代码和名称模糊匹配
+- [x] **DATA-02**: 选择股票后自动从 tushare 拉取日 K 数据（OHLCV）存入 SQLite
 - [ ] **DATA-03**: 技术指标计算结果存入数据库，避免重复计算
 - [ ] **DATA-04**: 支持指标参数调节（如 MA 周期、RSI 周期等）
 - [ ] **DATA-05**: 支持基于基础字段的四则运算组合新指标
@@ -92,8 +92,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 2 | Pending |
 | DATA-04 | Phase 2 | Pending |
 | DATA-05 | — | Deferred to v2 (ENHANC-04) |

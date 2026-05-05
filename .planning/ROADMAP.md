@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Backend: FastAPI server, SQLite database, tushare data pipeline, stock search and daily K-line API endpoints
+- [x] 01-01-PLAN.md — Backend: FastAPI server, SQLite database, tushare data pipeline, stock search and daily K-line API endpoints
 - [ ] 01-02-PLAN.md — Frontend: Vue 3 app, dark theme, stock search autocomplete, interactive K-line chart with volume and MA overlays, human verification
 
 ### Phase 2: Technical Indicators + Volume-Price Analysis
