@@ -15,11 +15,11 @@
 
 ### K-Line Charting
 
-- [ ] **CHART-01**: 用户可查看 K 线图 + 成交量柱状图，数据同步显示
-- [ ] **CHART-02**: K 线图支持十字光标，鼠标悬浮显示 OHLCV 数据
-- [ ] **CHART-03**: K 线图支持缩放、拖拽平移、时间轴导航
-- [ ] **CHART-04**: A 股颜色惯例：红涨绿跌
-- [ ] **CHART-05**: TradingView 风格深色主题
+- [x] **CHART-01**: 用户可查看 K 线图 + 成交量柱状图，数据同步显示
+- [x] **CHART-02**: K 线图支持十字光标，鼠标悬浮显示 OHLCV 数据
+- [x] **CHART-03**: K 线图支持缩放、拖拽平移、时间轴导航
+- [x] **CHART-04**: A 股颜色惯例：红涨绿跌
+- [x] **CHART-05**: TradingView 风格深色主题
 
 ### Volume-Price Analysis
 
@@ -34,7 +34,7 @@
 - [ ] **INDIC-02**: 用户可查看 RSI 指标，显示在子图中，支持参数调节
 - [ ] **INDIC-03**: 用户可查看 KDJ 指标，显示在子图中
 - [ ] **INDIC-04**: 用户可查看 BOLL 指标（上轨+中轨+下轨），叠加在 K 线图上
-- [ ] **INDIC-05**: 用户可查看移动平均线（MA5/MA10/MA20/MA60），叠加在 K 线图上
+- [x] **INDIC-05**: 用户可查看移动平均线（MA5/MA10/MA20/MA60），叠加在 K 线图上
 - [ ] **INDIC-06**: 用户可调节指标参数并重新计算
 
 ### Advanced Analysis
@@ -97,11 +97,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-03 | Phase 2 | Pending |
 | DATA-04 | Phase 2 | Pending |
 | DATA-05 | — | Deferred to v2 (ENHANC-04) |
-| CHART-01 | Phase 1 | Pending |
-| CHART-02 | Phase 1 | Pending |
-| CHART-03 | Phase 1 | Pending |
-| CHART-04 | Phase 1 | Pending |
-| CHART-05 | Phase 1 | Pending |
+| CHART-01 | Phase 1 | Complete |
+| CHART-02 | Phase 1 | Complete |
+| CHART-03 | Phase 1 | Complete |
+| CHART-04 | Phase 1 | Complete |
+| CHART-05 | Phase 1 | Complete |
 | VPA-01 | Phase 2 | Pending |
 | VPA-02 | Phase 2 | Pending |
 | VPA-03 | Phase 2 | Pending |
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INDIC-02 | Phase 2 | Pending |
 | INDIC-03 | Phase 2 | Pending |
 | INDIC-04 | Phase 2 | Pending |
-| INDIC-05 | Phase 1 | Pending |
+| INDIC-05 | Phase 1 | Complete |
 | INDIC-06 | Phase 2 | Pending |
 | ADVAN-01 | Phase 3 | Pending |
 | ADVAN-02 | Phase 3 | Pending |

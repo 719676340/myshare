@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — Backend: FastAPI server, SQLite database, tushare data pipeline, stock search and daily K-line API endpoints
-- [ ] 01-02-PLAN.md — Frontend: Vue 3 app, dark theme, stock search autocomplete, interactive K-line chart with volume and MA overlays, human verification
+- [x] 01-02-PLAN.md — Frontend: Vue 3 app, dark theme, stock search autocomplete, interactive K-line chart with volume and MA overlays, human verification
 
 ### Phase 2: Technical Indicators + Volume-Price Analysis
 **Goal**: Users can view technical indicator sub-charts and see automatic volume-price signal markers and K-line pattern annotations on the chart
