@@ -1,0 +1,106 @@
+@use './variables' as *;
+
+// Global dark theme styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: $bg-primary;
+  color: $text-primary;
+  font-family: $font-family;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: $bg-primary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-color;
+  border-radius: 3px;
+
+  &:hover {
+    background: $text-secondary;
+  }
+}
+
+// Element Plus dark theme overrides
+.el-input__wrapper {
+  background-color: $bg-secondary !important;
+  box-shadow: 0 0 0 1px $border-color inset !important;
+
+  &:hover {
+    box-shadow: 0 0 0 1px $text-secondary inset !important;
+  }
+
+  &.is-focus {
+    box-shadow: 0 0 0 1px $accent-blue inset !important;
+  }
+}
+
+.el-input__inner {
+  color: $text-primary !important;
+
+  &::placeholder {
+    color: $text-secondary !important;
+  }
+}
+
+.el-autocomplete {
+  width: 100%;
+}
+
+.el-autocomplete-suggestion {
+  background-color: $bg-secondary !important;
+  border-color: $border-color !important;
+
+  li {
+    color: $text-primary !important;
+
+    &:hover,
+    &.highlighted {
+      background-color: $bg-toolbar !important;
+    }
+  }
+}
+
+.el-button {
+  &--default {
+    background-color: $bg-toolbar !important;
+    border-color: $border-color !important;
+    color: $text-primary !important;
+
+    &:hover {
+      border-color: $accent-blue !important;
+      color: $accent-blue !important;
+    }
+  }
+}
+
+// Selection color
+::selection {
+  background-color: rgba($accent-blue, 0.3);
+}
