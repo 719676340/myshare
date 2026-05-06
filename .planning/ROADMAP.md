@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 - [x] 04-01: TBD
-- [ ] 04-02: TBD
+- [x] 04-02: TBD
 
 ### Phase 5: Strategy Backtesting Module
 **Goal**: Users can run automated backtests with preset strategy templates and see comprehensive performance metrics visualized
