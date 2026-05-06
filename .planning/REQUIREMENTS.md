@@ -26,7 +26,7 @@
 - [x] **VPA-01**: 自动标记量价确认信号（放量上涨、缩量下跌）
 - [x] **VPA-02**: 自动标记量价异常信号（长阳+低量陷阱、短阳+高量走弱、上涨量递减）
 - [x] **VPA-03**: K 线形态自动识别（锤头线、射击十字星、十字星、吊人线等）
-- [ ] **VPA-04**: 量价背离检测（价格创新高但成交量下降等）
+- [x] **VPA-04**: 量价背离检测（价格创新高但成交量下降等）
 
 ### Technical Indicators
 
@@ -39,11 +39,11 @@
 
 ### Advanced Analysis
 
-- [ ] **ADVAN-01**: 自动识别支撑/阻力位（孤立支点检测）
-- [ ] **ADVAN-02**: 自动绘制动态趋势线
-- [ ] **ADVAN-03**: 市场循环阶段自动标注（吸筹→上涨→派发→下跌）
-- [ ] **ADVAN-04**: VAP 价量分布图（横向直方图叠加在价格图上）
-- [ ] **ADVAN-05**: 多时间跨度联动分析（日/周/月 K 联动）
+- [x] **ADVAN-01**: 自动识别支撑/阻力位（孤立支点检测）
+- [x] **ADVAN-02**: 自动绘制动态趋势线
+- [x] **ADVAN-03**: 市场循环阶段自动标注（吸筹→上涨→派发→下跌）
+- [x] **ADVAN-04**: VAP 价量分布图（横向直方图叠加在价格图上）
+- [x] **ADVAN-05**: 多时间跨度联动分析（日/周/月 K 联动）
 
 ### Trading Practice
 
@@ -105,18 +105,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VPA-01 | Phase 2 | Complete |
 | VPA-02 | Phase 2 | Complete |
 | VPA-03 | Phase 2 | Complete |
-| VPA-04 | Phase 3 | Pending |
+| VPA-04 | Phase 3 | Complete |
 | INDIC-01 | Phase 2 | Complete |
 | INDIC-02 | Phase 2 | Complete |
 | INDIC-03 | Phase 2 | Complete |
 | INDIC-04 | Phase 2 | Complete |
 | INDIC-05 | Phase 1 | Complete |
 | INDIC-06 | Phase 2 | Complete |
-| ADVAN-01 | Phase 3 | Pending |
-| ADVAN-02 | Phase 3 | Pending |
-| ADVAN-03 | Phase 3 | Pending |
-| ADVAN-04 | Phase 3 | Pending |
-| ADVAN-05 | Phase 3 | Pending |
+| ADVAN-01 | Phase 3 | Complete |
+| ADVAN-02 | Phase 3 | Complete |
+| ADVAN-03 | Phase 3 | Complete |
+| ADVAN-04 | Phase 3 | Complete |
+| ADVAN-05 | Phase 3 | Complete |
 | PRACT-01 | Phase 4 | Pending |
 | PRACT-02 | Phase 4 | Pending |
 | PRACT-03 | Phase 4 | Pending |
