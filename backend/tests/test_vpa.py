@@ -79,12 +79,12 @@ async def seed_vpa_data(db_session: AsyncSession):
         # Test 5: hammer - long lower shadow, small body at top
         DailyBar(
             ts_code="888888.SZ", trade_date="20240110",
-            open=10.2, high=10.3, low=9.0, close=10.2, vol=100000.0,
+            open=9.9, high=10.3, low=9.0, close=10.2, vol=100000.0,
         ),
         # Test 6: shooting star - long upper shadow, small body at bottom
         DailyBar(
             ts_code="888888.SZ", trade_date="20240111",
-            open=10.0, high=11.5, low=9.9, close=10.1, vol=100000.0,
+            open=10.0, high=11.0, low=9.9, close=10.15, vol=100000.0,
         ),
         # Test 7: doji - very small body relative to range
         DailyBar(
@@ -115,7 +115,7 @@ async def seed_vpa_data(db_session: AsyncSession):
         # Test 8: hanging man - hammer shape but in uptrend
         DailyBar(
             ts_code="888888.SZ", trade_date="20240118",
-            open=10.6, high=10.7, low=9.5, close=10.6, vol=100000.0,
+            open=10.4, high=10.8, low=9.5, close=10.65, vol=100000.0,
         ),
     ]
     db_session.add_all(bars)
@@ -260,16 +260,19 @@ class TestIndicatorsAPI:
 
         # Seed enough bars for MACD (need at least 26 + 9 = 35 for full MACD)
         import numpy as np
+        from datetime import date, timedelta
         rng = np.random.RandomState(42)
         base = 20.0
+        start = date(2024, 1, 1)
         for i in range(50):
             close = base + rng.randn() * 0.5
             o = close + rng.randn() * 0.2
             h = max(o, close) + abs(rng.randn() * 0.3)
             l = min(o, close) - abs(rng.randn() * 0.3)
+            d = (start + timedelta(days=i)).strftime("%Y%m%d")
             bar = DailyBar(
                 ts_code="777777.SZ",
-                trade_date=f"2024{(i // 30) + 1:02d}{(i % 28) + 1:02d}",
+                trade_date=d,
                 open=o, high=h, low=l, close=close, vol=100000.0,
             )
             db_session.add(bar)

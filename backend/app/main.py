@@ -78,6 +78,10 @@ async def health_check():
 # Import and mount routers (registered after app creation to avoid circular imports)
 from app.api.stocks import router as stocks_router  # noqa: E402
 from app.api.daily import router as daily_router  # noqa: E402
+from app.api.indicators import router as indicators_router  # noqa: E402
+from app.api.vpa import router as vpa_router  # noqa: E402
 
 app.include_router(stocks_router, prefix="/api")
 app.include_router(daily_router, prefix="/api")
+app.include_router(indicators_router, prefix="/api")
+app.include_router(vpa_router, prefix="/api")
