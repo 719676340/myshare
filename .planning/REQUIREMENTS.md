@@ -9,8 +9,8 @@
 
 - [x] **DATA-01**: 用户可通过股票搜索选择股票，支持代码和名称模糊匹配
 - [x] **DATA-02**: 选择股票后自动从 tushare 拉取日 K 数据（OHLCV）存入 SQLite
-- [ ] **DATA-03**: 技术指标计算结果存入数据库，避免重复计算
-- [ ] **DATA-04**: 支持指标参数调节（如 MA 周期、RSI 周期等）
+- [x] **DATA-03**: 技术指标计算结果存入数据库，避免重复计算
+- [x] **DATA-04**: 支持指标参数调节（如 MA 周期、RSI 周期等）
 - [ ] **DATA-05**: 支持基于基础字段的四则运算组合新指标
 
 ### K-Line Charting
@@ -30,12 +30,12 @@
 
 ### Technical Indicators
 
-- [ ] **INDIC-01**: 用户可查看 MACD 指标（MACD 线 + 信号线 + 柱状图），显示在子图中
-- [ ] **INDIC-02**: 用户可查看 RSI 指标，显示在子图中，支持参数调节
-- [ ] **INDIC-03**: 用户可查看 KDJ 指标，显示在子图中
-- [ ] **INDIC-04**: 用户可查看 BOLL 指标（上轨+中轨+下轨），叠加在 K 线图上
+- [x] **INDIC-01**: 用户可查看 MACD 指标（MACD 线 + 信号线 + 柱状图），显示在子图中
+- [x] **INDIC-02**: 用户可查看 RSI 指标，显示在子图中，支持参数调节
+- [x] **INDIC-03**: 用户可查看 KDJ 指标，显示在子图中
+- [x] **INDIC-04**: 用户可查看 BOLL 指标（上轨+中轨+下轨），叠加在 K 线图上
 - [x] **INDIC-05**: 用户可查看移动平均线（MA5/MA10/MA20/MA60），叠加在 K 线图上
-- [ ] **INDIC-06**: 用户可调节指标参数并重新计算
+- [x] **INDIC-06**: 用户可调节指标参数并重新计算
 
 ### Advanced Analysis
 
@@ -94,8 +94,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 2 | Pending |
-| DATA-04 | Phase 2 | Pending |
+| DATA-03 | Phase 2 | Complete |
+| DATA-04 | Phase 2 | Complete |
 | DATA-05 | — | Deferred to v2 (ENHANC-04) |
 | CHART-01 | Phase 1 | Complete |
 | CHART-02 | Phase 1 | Complete |
@@ -106,12 +106,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VPA-02 | Phase 2 | Pending |
 | VPA-03 | Phase 2 | Pending |
 | VPA-04 | Phase 3 | Pending |
-| INDIC-01 | Phase 2 | Pending |
-| INDIC-02 | Phase 2 | Pending |
-| INDIC-03 | Phase 2 | Pending |
-| INDIC-04 | Phase 2 | Pending |
+| INDIC-01 | Phase 2 | Complete |
+| INDIC-02 | Phase 2 | Complete |
+| INDIC-03 | Phase 2 | Complete |
+| INDIC-04 | Phase 2 | Complete |
 | INDIC-05 | Phase 1 | Complete |
-| INDIC-06 | Phase 2 | Pending |
+| INDIC-06 | Phase 2 | Complete |
 | ADVAN-01 | Phase 3 | Pending |
 | ADVAN-02 | Phase 3 | Pending |
 | ADVAN-03 | Phase 3 | Pending |
