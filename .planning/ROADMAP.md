@@ -46,11 +46,12 @@ Plans:
   3. Volume-price confirmation signals (volume-up on rise, volume-down on fall) are automatically marked on the chart
   4. Volume-price anomaly signals (long candle + low volume trap, short candle + high volume weakness) are automatically marked
   5. K-line patterns (hammer, shooting star, doji, hanging man) are automatically identified and annotated
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Backend: IndicatorValue model, indicator computation service (MACD/RSI/KDJ/BOLL), VPA signal detection, K-line pattern recognition, API endpoints
+- [ ] 02-02-PLAN.md — Frontend: Indicator sub-charts (MACD/RSI/KDJ) with toggle buttons, BOLL overlay, Popover parameter panels, dynamic multi-grid chart layout
+- [ ] 02-03-PLAN.md — Frontend: VPA signal markers and K-line pattern annotations rendering, human verification of all Phase 2 features
 
 ### Phase 3: Advanced Analysis Features
 **Goal**: Users can see auto-detected support/resistance levels, trend lines, market cycle annotations, and volume-at-price distribution on the chart
@@ -107,7 +108,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation + K-Line Charting | 0/2 | Planned | - |
-| 2. Technical Indicators + Volume-Price Analysis | 0/? | Not started | - |
+| 2. Technical Indicators + Volume-Price Analysis | 0/3 | Planned | - |
 | 3. Advanced Analysis Features | 0/? | Not started | - |
 | 4. Trading Practice Module | 0/? | Not started | - |
 | 5. Strategy Backtesting Module | 0/? | Not started | - |
