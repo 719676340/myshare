@@ -1,43 +1,105 @@
 <template>
-  <div class="placeholder-view">
-    <div class="placeholder-content">
-      <h2>交易练习模块开发中</h2>
-      <p>选股后逐日推进K线，模拟买入卖出操作，练习量价分析技巧</p>
+  <div class="practice-view">
+    <!-- Phase 1: Config -->
+    <PracticeConfig v-if="!practiceStore.isConfigured" />
+
+    <!-- Phase 2: Active Practice -->
+    <div v-else-if="!practiceStore.isFinished" class="practice-main">
+      <div class="practice-chart">
+        <KLineChart :fixedData="practiceStore.dailyData" />
+      </div>
+      <div class="practice-sidebar">
+        <PracticePanel />
+      </div>
     </div>
+
+    <!-- Phase 3: Statistics -->
+    <PracticeStats
+      v-else
+      @newPractice="handleNewPractice"
+    />
   </div>
 </template>
 
 <script>
+import { onMounted, onBeforeUnmount } from 'vue'
+import KLineChart from '@/components/KLineChart.vue'
+import PracticeConfig from '@/components/practice/PracticeConfig.vue'
+import PracticePanel from '@/components/practice/PracticePanel.vue'
+import PracticeStats from '@/components/practice/PracticeStats.vue'
+import { usePracticeStore } from '@/stores/practice'
+
 export default {
-  name: 'PracticeView'
+  name: 'PracticeView',
+  components: {
+    KLineChart,
+    PracticeConfig,
+    PracticePanel,
+    PracticeStats
+  },
+  setup() {
+    const practiceStore = usePracticeStore()
+
+    function handleKeydown(event) {
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
+        return
+      }
+      if (event.code === 'Space' && practiceStore.isConfigured && !practiceStore.isFinished && !practiceStore.isAdvancing) {
+        event.preventDefault()
+        practiceStore.advanceDay()
+      }
+    }
+
+    function handleNewPractice() {
+      practiceStore.resetPractice()
+    }
+
+    onMounted(() => {
+      window.addEventListener('keydown', handleKeydown)
+    })
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('keydown', handleKeydown)
+    })
+
+    return {
+      practiceStore,
+      handleNewPractice
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 @use '@/styles/variables' as *;
 
-.placeholder-view {
+.practice-view {
   height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   background-color: $bg-primary;
 }
 
-.placeholder-content {
-  text-align: center;
+.practice-main {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
 
-  h2 {
-    color: $text-secondary;
-    font-size: 20px;
-    font-weight: 500;
-    margin-bottom: 12px;
-  }
+.practice-chart {
+  flex: 7;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
 
-  p {
-    color: $text-secondary;
-    font-size: 14px;
-    opacity: 0.7;
-  }
+.practice-sidebar {
+  flex: 3;
+  min-width: 340px;
+  max-width: 420px;
+  height: 100%;
+  overflow-y: auto;
+  border-left: 1px solid $border-color;
+  background-color: $bg-secondary;
 }
 </style>
