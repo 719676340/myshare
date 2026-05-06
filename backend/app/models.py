@@ -110,3 +110,94 @@ class IndicatorValue(Base):
 
     def __repr__(self):
         return f"<IndicatorValue({self.ts_code} {self.trade_date} {self.indicator_name})>"
+
+
+class PracticeSession(Base):
+    """Trading practice session."""
+
+    __tablename__ = "practice_sessions"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ts_code = Column(
+        String(16),
+        ForeignKey("stocks.ts_code"),
+        nullable=False,
+        comment="股票代码",
+    )
+    start_date = Column(String(8), nullable=False, comment="练习起始日期 YYYYMMDD")
+    end_date = Column(String(8), nullable=False, comment="练习结束日期 YYYYMMDD")
+    initial_capital = Column(Float, nullable=False, default=1000000.0, comment="初始资金")
+    current_date = Column(String(8), nullable=True, comment="当前推进到的日期")
+    cash = Column(Float, nullable=False, comment="当前可用资金")
+    status = Column(String(16), nullable=False, default="active", comment="状态: active/finished")
+    created_at = Column(String(19), nullable=False, comment="创建时间 ISO datetime")
+
+    stock = relationship("Stock")
+    trades = relationship("Trade", back_populates="session", lazy="selectin")
+    positions = relationship("Position", back_populates="session", lazy="selectin")
+
+    def __repr__(self):
+        return f"<PracticeSession({self.id} {self.ts_code} {self.status})>"
+
+
+class Trade(Base):
+    """Individual buy/sell trade record."""
+
+    __tablename__ = "practice_trades"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("practice_sessions.id"),
+        nullable=False,
+        index=True,
+        comment="会话ID",
+    )
+    trade_type = Column(String(4), nullable=False, comment="交易类型: buy/sell")
+    ts_code = Column(String(16), nullable=False, comment="股票代码")
+    trade_date = Column(String(8), nullable=False, comment="交易日期 YYYYMMDD")
+    shares = Column(Integer, nullable=False, comment="股数（手x100）")
+    price = Column(Float, nullable=False, comment="成交价格")
+    amount = Column(Float, nullable=False, comment="成交金额 = shares * price")
+    commission = Column(Float, nullable=False, default=0.0, comment="佣金")
+    stamp_tax = Column(Float, nullable=False, default=0.0, comment="印花税(仅卖出)")
+
+    session = relationship("PracticeSession", back_populates="trades")
+
+    def __repr__(self):
+        return f"<Trade({self.id} {self.trade_type} {self.ts_code} {self.trade_date})>"
+
+
+class Position(Base):
+    """Open position lot tracking (FIFO sell matching)."""
+
+    __tablename__ = "practice_positions"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("practice_sessions.id"),
+        nullable=False,
+        index=True,
+        comment="会话ID",
+    )
+    buy_trade_id = Column(
+        Integer,
+        ForeignKey("practice_trades.id"),
+        nullable=False,
+        comment="对应的买入交易ID",
+    )
+    ts_code = Column(String(16), nullable=False, comment="股票代码")
+    buy_date = Column(String(8), nullable=False, comment="买入日期 YYYYMMDD")
+    buy_price = Column(Float, nullable=False, comment="买入价格")
+    total_shares = Column(Integer, nullable=False, comment="初始买入股数")
+    remaining_shares = Column(Integer, nullable=False, comment="剩余可卖股数")
+
+    session = relationship("PracticeSession", back_populates="positions")
+    buy_trade = relationship("Trade", foreign_keys=[buy_trade_id])
+
+    def __repr__(self):
+        return f"<Position({self.id} {self.ts_code} remaining={self.remaining_shares})>"
