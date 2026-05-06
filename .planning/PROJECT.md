@@ -21,13 +21,14 @@
 - [x] 策略分析模块 — K 线形态识别（锤头线、射击十字星、十字星、吊人线等） — Validated in Phase 02
 - [x] 策略分析模块 — 技术指标计算与展示（MACD、RSI、KDJ、BOLL），结果存入数据库 — Validated in Phase 02
 - [x] 数据管理 — 技术指标计算后存入数据库 — Validated in Phase 02
+- [x] 策略分析模块 — 支撑/阻力位自动识别（孤立支点检测） — Validated in Phase 03
+- [x] 策略分析模块 — 动态趋势线绘制 — Validated in Phase 03
+- [x] 策略分析模块 — 市场循环阶段标注（吸筹→上涨→派发→下跌） — Validated in Phase 03
+- [x] 策略分析模块 — VAP 价量分布图 — Validated in Phase 03
+- [x] 策略分析模块 — 多时间跨度联动分析 — Validated in Phase 03
+- [x] 策略分析模块 — 量价背离检测 — Validated in Phase 03
 
 ### Active
-- [ ] 策略分析模块 — 支撑/阻力位自动识别（孤立支点检测）
-- [ ] 策略分析模块 — 动态趋势线绘制
-- [ ] 策略分析模块 — 市场循环阶段标注（吸筹→上涨→派发→下跌）
-- [ ] 策略分析模块 — VAP 价量分布图
-- [ ] 策略分析模块 — 多时间跨度联动分析
 - [ ] 交易练习模块 — 选股后逐日推进，不可回退
 - [ ] 交易练习模块 — 买入/卖出 + 仓位比例选择
 - [ ] 交易练习模块 — 模拟交易费用（佣金万 2.5 + 印花税千 1）
@@ -69,6 +70,9 @@
 | 股票列表存入数据库 | 沪深 A 股列表预加载，支持代码/名称模糊搜索 | ✓ Phase 01 完成 |
 | TradingView 深色主题 | 符合交易软件行业标准，用户习惯 | ✓ Phase 01 完成 |
 | 技术指标计算后存入数据库 | 避免重复计算，提升响应速度 | ✓ Phase 02 完成 |
+| S/R 取前 8 强度 + 中文标签 | 过多虚线无法区分支撑阻力，限制数量并加标签 | ✓ Phase 03 完成 |
+| 市场循环用 markArea + 图例条目 | 用窄网格 + 不可见线系列渲染色带，图例显示4阶段 | ✓ Phase 03 完成 |
+| VAP 用 custom series + coordSys | 用 params.coordSys 获取网格像素边界，缩放时不丢失 | ✓ Phase 03 完成 |
 
 ## Evolution
 
@@ -88,4 +92,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-06 after Phase 02 completion*
+*Last updated: 2026-05-06 after Phase 03 completion*
