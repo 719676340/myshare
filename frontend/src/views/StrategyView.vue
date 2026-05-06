@@ -116,6 +116,50 @@
             size="small"
             @click="toggleIndicator('showPatterns')"
           >K线形态</el-button>
+
+          <div class="toggle-divider"></div>
+
+          <!-- Support/Resistance toggle (shared with trend lines per D-03) -->
+          <el-button
+            :type="chartStore.showSR ? 'primary' : 'default'"
+            size="small"
+            @click="toggleSR"
+          >支撑/阻力</el-button>
+
+          <!-- Market Cycle toggle -->
+          <el-button
+            :type="chartStore.showCycle ? 'primary' : 'default'"
+            size="small"
+            @click="toggleCycle"
+          >市场循环</el-button>
+
+          <!-- VAP toggle (independent per D-11) -->
+          <el-button
+            :type="chartStore.showVAP ? 'primary' : 'default'"
+            size="small"
+            @click="toggleVAP"
+          >VAP</el-button>
+
+          <div class="toggle-divider"></div>
+
+          <!-- Timeframe button group -->
+          <el-button-group class="timeframe-group">
+            <el-button
+              :type="chartStore.timeframe === 'daily' ? 'primary' : 'default'"
+              size="small"
+              @click="setTimeframe('daily')"
+            >日K</el-button>
+            <el-button
+              :type="chartStore.timeframe === 'weekly' ? 'primary' : 'default'"
+              size="small"
+              @click="setTimeframe('weekly')"
+            >周K</el-button>
+            <el-button
+              :type="chartStore.timeframe === 'monthly' ? 'primary' : 'default'"
+              size="small"
+              @click="setTimeframe('monthly')"
+            >月K</el-button>
+          </el-button-group>
         </div>
       </div>
     </div>
@@ -206,6 +250,34 @@ export default {
       stockStore.fetchIndicatorData(indicator, params)
     }
 
+    function toggleSR() {
+      chartStore.toggleSR()
+      if (chartStore.showSR && stockStore.currentStock) {
+        stockStore.fetchSRData()
+      }
+    }
+
+    function toggleCycle() {
+      chartStore.toggleCycle()
+      if (chartStore.showCycle && stockStore.currentStock) {
+        stockStore.fetchCycleData()
+      }
+    }
+
+    function toggleVAP() {
+      chartStore.toggleVAP()
+      if (chartStore.showVAP && stockStore.currentStock) {
+        stockStore.fetchVAPData()
+      }
+    }
+
+    function setTimeframe(tf) {
+      chartStore.setTimeframe(tf)
+      if (tf !== 'daily' && stockStore.currentStock) {
+        stockStore.fetchTimeframeData(tf)
+      }
+    }
+
     // Fetch all enabled data when daily data loads for a stock
     watch(
       () => stockStore.hasData,
@@ -224,7 +296,11 @@ export default {
       kdjParams,
       bollParams,
       toggleIndicator,
-      applyParams
+      applyParams,
+      toggleSR,
+      toggleCycle,
+      toggleVAP,
+      setTimeframe
     }
   }
 }
@@ -278,6 +354,10 @@ export default {
   height: 20px;
   background-color: $border-color;
   margin: 0 4px;
+}
+
+.timeframe-group {
+  margin-left: 4px;
 }
 
 .chart-area {
