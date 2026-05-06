@@ -27,12 +27,12 @@
 - [x] 策略分析模块 — VAP 价量分布图 — Validated in Phase 03
 - [x] 策略分析模块 — 多时间跨度联动分析 — Validated in Phase 03
 - [x] 策略分析模块 — 量价背离检测 — Validated in Phase 03
+- [x] 交易练习模块 — 选股后逐日推进，不可回退 — Validated in Phase 04
+- [x] 交易练习模块 — 买入/卖出 + 仓位比例选择 — Validated in Phase 04
+- [x] 交易练习模块 — 模拟交易费用（佣金万 2.5 + 印花税千 1） — Validated in Phase 04
+- [x] 交易练习模块 — 最终收益统计 — Validated in Phase 04
 
 ### Active
-- [ ] 交易练习模块 — 选股后逐日推进，不可回退
-- [ ] 交易练习模块 — 买入/卖出 + 仓位比例选择
-- [ ] 交易练习模块 — 模拟交易费用（佣金万 2.5 + 印花税千 1）
-- [ ] 交易练习模块 — 最终收益统计
 - [ ] 自动回测模块 — 预设策略模板 + 参数调节
 - [ ] 自动回测模块 — 回测指标输出（总收益率、年化收益率、最大回撤、胜率等）
 - [ ] 自动回测模块 — 资金曲线图 + 买卖点标记
@@ -92,4 +92,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-06 after Phase 03 completion*
+*Last updated: 2026-05-06 after Phase 04 completion*
