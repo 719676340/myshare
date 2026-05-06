@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { searchStocks as searchStocksApi, getDailyData, refreshData as refreshDataApi } from '@/api'
+import { searchStocks as searchStocksApi, getDailyData, refreshData as refreshDataApi, getIndicatorData, getVPAData } from '@/api'
 
 export const useStockStore = defineStore('stock', {
   state: () => ({
@@ -7,7 +7,9 @@ export const useStockStore = defineStore('stock', {
     dailyData: [],
     loading: false,
     error: null,
-    cacheInfo: null // { last_date, total_bars }
+    cacheInfo: null, // { last_date, total_bars }
+    indicatorData: {},       // { macd: {data: [...]}, rsi: {data: [...]}, ... }
+    vpaData: { signals: [], patterns: [] }
   }),
 
   getters: {
@@ -41,6 +43,8 @@ export const useStockStore = defineStore('stock', {
       this.dailyData = []
       this.error = null
       this.cacheInfo = null
+      this.indicatorData = {}
+      this.vpaData = { signals: [], patterns: [] }
       await this.fetchDailyData()
     },
 
@@ -96,6 +100,58 @@ export const useStockStore = defineStore('stock', {
       this.dailyData = []
       this.error = null
       this.cacheInfo = null
+      this.indicatorData = {}
+      this.vpaData = { signals: [], patterns: [] }
+    },
+
+    /**
+     * Fetch indicator data for a specific indicator
+     */
+    async fetchIndicatorData(indicator, params = {}) {
+      if (!this.currentStock) return
+      try {
+        const result = await getIndicatorData(this.currentStock.ts_code, indicator, params)
+        // Store as { [indicator]: { params, params_hash, data } }
+        this.indicatorData = { ...this.indicatorData, [indicator]: result }
+      } catch (err) {
+        console.error(`Failed to fetch ${indicator} data:`, err)
+      }
+    },
+
+    /**
+     * Fetch volume-price analysis data (signals + patterns)
+     */
+    async fetchVPAData() {
+      if (!this.currentStock) return
+      try {
+        const result = await getVPAData(this.currentStock.ts_code)
+        this.vpaData = { signals: result.signals || [], patterns: result.patterns || [] }
+      } catch (err) {
+        console.error('Failed to fetch VPA data:', err)
+      }
+    },
+
+    /**
+     * Fetch indicator data for all enabled indicators
+     */
+    async fetchAllEnabledData(chartStore) {
+      const promises = []
+      if (chartStore.showMACD) {
+        promises.push(this.fetchIndicatorData('macd', chartStore.indicatorParams.macd))
+      }
+      if (chartStore.showRSI) {
+        promises.push(this.fetchIndicatorData('rsi', chartStore.indicatorParams.rsi))
+      }
+      if (chartStore.showKDJ) {
+        promises.push(this.fetchIndicatorData('kdj', chartStore.indicatorParams.kdj))
+      }
+      if (chartStore.showBOLL) {
+        promises.push(this.fetchIndicatorData('boll', chartStore.indicatorParams.boll))
+      }
+      if (chartStore.showSignals || chartStore.showPatterns) {
+        promises.push(this.fetchVPAData())
+      }
+      await Promise.all(promises)
     }
   }
 })

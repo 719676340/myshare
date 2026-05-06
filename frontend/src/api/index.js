@@ -60,4 +60,30 @@ export function refreshData(tsCode) {
     .then((res) => res.data)
 }
 
+/**
+ * Get computed indicator data for a stock
+ * @param {string} tsCode - stock code
+ * @param {string} indicator - indicator name: macd/rsi/kdj/boll
+ * @param {Object} params - indicator parameters (optional)
+ * @returns {Promise<{indicator: string, params: Object, data: Array}>}
+ */
+export function getIndicatorData(tsCode, indicator, params = {}) {
+  const searchParams = new URLSearchParams({ indicator })
+  if (Object.keys(params).length > 0) {
+    searchParams.set('params', JSON.stringify(params))
+  }
+  return apiClient.get(`/indicators/${tsCode}`, { params: Object.fromEntries(searchParams) })
+    .then((res) => res.data)
+}
+
+/**
+ * Get volume-price analysis data (signals + patterns) for a stock
+ * @param {string} tsCode - stock code
+ * @returns {Promise<{ts_code: string, signals: Array, patterns: Array}>}
+ */
+export function getVPAData(tsCode) {
+  return apiClient.get(`/vpa/${tsCode}`)
+    .then((res) => res.data)
+}
+
 export default apiClient
