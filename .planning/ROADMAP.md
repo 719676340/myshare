@@ -63,11 +63,12 @@ Plans:
   3. Market cycle phases (accumulation, markup, distribution, markdown) are annotated on the chart timeline
   4. VAP volume distribution is displayed as a horizontal histogram overlaid on the price chart
   5. User can switch between daily, weekly, and monthly K-line views with linked navigation
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Backend: AdvancedAnalysisService with pivot detection, support/resistance, trend lines, market cycle, VAP, K-line aggregation, divergence detection, API endpoints
+- [ ] 03-02-PLAN.md — Frontend: KLineChart rendering with support/resistance lines, trend lines, market cycle bands, VAP overlay, multi-timeframe, toolbar controls, store extensions
+- [ ] 03-03-PLAN.md — Human verification of all Phase 3 advanced analysis features
 
 ### Phase 4: Trading Practice Module
 **Goal**: Users can practice trading on historical A-share data with full simulation of real market rules
@@ -109,6 +110,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Data Foundation + K-Line Charting | 0/2 | Planned | - |
 | 2. Technical Indicators + Volume-Price Analysis | 0/3 | Planned | - |
-| 3. Advanced Analysis Features | 0/? | Not started | - |
+| 3. Advanced Analysis Features | 0/3 | Planned | - |
 | 4. Trading Practice Module | 0/? | Not started | - |
 | 5. Strategy Backtesting Module | 0/? | Not started | - |
