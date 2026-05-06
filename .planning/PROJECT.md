@@ -12,11 +12,14 @@
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] 策略分析模块 — K 线图 + 成交量展示 — Validated in Phase 01
+- [x] 数据管理 — tushare 拉取 A 股日 K 数据存入 SQLite — Validated in Phase 01
+- [x] UI — TradingView 风格深色主题 — Validated in Phase 01
+- [x] UI — 股票搜索选择（代码/名称模糊匹配） — Validated in Phase 01
+- [x] UI — K 线图交互（十字光标、缩放、拖拽平移、OHLCV 显示） — Validated in Phase 01
 
 ### Active
 
-- [ ] 策略分析模块 — K 线图 + 成交量展示
 - [ ] 策略分析模块 — 量价确认/异常标记（放量上涨、缩量下跌、量价背离等）
 - [ ] 策略分析模块 — K 线形态识别（锤头线、射击十字星、十字星、吊人线等）
 - [ ] 策略分析模块 — 技术指标计算与展示（MACD、RSI、KDJ、BOLL），结果存入数据库
@@ -32,12 +35,8 @@
 - [ ] 自动回测模块 — 预设策略模板 + 参数调节
 - [ ] 自动回测模块 — 回测指标输出（总收益率、年化收益率、最大回撤、胜率等）
 - [ ] 自动回测模块 — 资金曲线图 + 买卖点标记
-- [ ] 数据管理 — tushare 拉取 A 股日 K 数据存入 SQLite
 - [ ] 数据管理 — 技术指标计算后存入数据库
 - [ ] 数据管理 — 支持预定义指标 + 参数调节 + 四则运算组合新指标
-- [ ] UI — TradingView 风格深色主题
-- [ ] UI — 股票搜索选择（代码/名称模糊匹配）
-- [ ] UI — K 线图交互（十字光标、缩放、拖拽平移、OHLCV 显示）
 
 ### Out of Scope
 
@@ -66,10 +65,10 @@
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 策略分析模块先行 | 核心价值所在，K 线图是其他两个模块的基础 | — Pending |
-| 按需拉取数据 | 首次选股时从 tushare 拉取，减少初始加载时间和 API 调用 | — Pending |
-| 股票列表存入数据库 | 沪深 A 股列表预加载，支持代码/名称模糊搜索 | — Pending |
-| TradingView 深色主题 | 符合交易软件行业标准，用户习惯 | — Pending |
+| 策略分析模块先行 | 核心价值所在，K 线图是其他两个模块的基础 | ✓ Phase 01 完成 |
+| 按需拉取数据 | 首次选股时从 tushare 拉取，减少初始加载时间和 API 调用 | ✓ Phase 01 完成 |
+| 股票列表存入数据库 | 沪深 A 股列表预加载，支持代码/名称模糊搜索 | ✓ Phase 01 完成 |
+| TradingView 深色主题 | 符合交易软件行业标准，用户习惯 | ✓ Phase 01 完成 |
 | 技术指标计算后存入数据库 | 避免重复计算，提升响应速度 | — Pending |
 
 ## Evolution
@@ -90,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-30 after initialization*
+*Last updated: 2026-05-06 after Phase 01 completion*
