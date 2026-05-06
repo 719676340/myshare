@@ -12,7 +12,7 @@
 <script>
 import { computed, ref } from 'vue'
 import { use } from 'echarts/core'
-import { CandlestickChart, BarChart, LineChart } from 'echarts/charts'
+import { CandlestickChart, BarChart, LineChart, ScatterChart } from 'echarts/charts'
 import {
   TitleComponent,
   TooltipComponent,
@@ -32,6 +32,7 @@ use([
   CandlestickChart,
   BarChart,
   LineChart,
+  ScatterChart,
   TitleComponent,
   TooltipComponent,
   GridComponent,
@@ -320,6 +321,138 @@ export default {
           z: 5
         })
         legendData.push('BOLL上轨', 'BOLL中轨', 'BOLL下轨')
+      }
+
+      // Build signal and pattern lookup maps
+      const signalMap = new Map(
+        (stockStore.vpaData.signals || []).map(s => [s.trade_date, s])
+      )
+      const patternMap = new Map(
+        (stockStore.vpaData.patterns || []).map(p => [p.trade_date, p])
+      )
+
+      // Determine anomaly signal types (visually distinct from confirmation)
+      const anomalyTypes = ['long_candle_low_volume', 'short_candle_high_volume', 'rising_volume_decline']
+
+      // Confirmation signal markers (triangles) per D-06
+      if (chartStore.showSignals) {
+        // Build confirmation signal data (up and down separately for different symbols)
+        const confirmUpData = []
+        const confirmDownData = []
+
+        for (let i = 0; i < dates.length; i++) {
+          const signal = signalMap.get(dates[i])
+          if (!signal || anomalyTypes.includes(signal.signal_type)) continue
+          const high = data[i].high
+          const low = data[i].low
+          const offset = (high - low) * 0.3 || high * 0.01
+          if (signal.direction === 'up') {
+            confirmUpData.push({
+              value: [i, high + offset],
+              itemStyle: { color: '#26a69a' }
+            })
+          } else {
+            confirmDownData.push({
+              value: [i, low - offset],
+              itemStyle: { color: '#ef5350' }
+            })
+          }
+        }
+
+        // Up confirmation signals (triangle pointing up, green)
+        series.push({
+          name: '确认信号(涨)',
+          type: 'scatter',
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          data: confirmUpData,
+          symbol: 'triangle',
+          symbolSize: 8,
+          z: 20
+        })
+
+        // Down confirmation signals (triangle pointing down, red)
+        series.push({
+          name: '确认信号(跌)',
+          type: 'scatter',
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          data: confirmDownData,
+          symbol: 'triangle',
+          symbolSize: 8,
+          symbolRotate: 180,
+          z: 20
+        })
+
+        // Anomaly signal markers (diamonds, yellow) per D-07
+        const anomalyData = []
+        for (let i = 0; i < dates.length; i++) {
+          const signal = signalMap.get(dates[i])
+          if (!signal || !anomalyTypes.includes(signal.signal_type)) continue
+          const high = data[i].high
+          const low = data[i].low
+          const offset = (high - low) * 0.3 || high * 0.01
+          anomalyData.push({
+            value: [i, high + offset],
+            itemStyle: { color: '#ffeb3b' }
+          })
+        }
+
+        series.push({
+          name: '异常信号',
+          type: 'scatter',
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          data: anomalyData,
+          symbol: 'diamond',
+          symbolSize: 10,
+          z: 20
+        })
+      } else {
+        // Hidden: add empty scatter series so indices stay consistent
+        series.push(
+          { name: '确认信号(涨)', type: 'scatter', xAxisIndex: 0, yAxisIndex: 0, data: [], symbol: 'triangle', symbolSize: 8, z: 20 },
+          { name: '确认信号(跌)', type: 'scatter', xAxisIndex: 0, yAxisIndex: 0, data: [], symbol: 'triangle', symbolSize: 8, symbolRotate: 180, z: 20 },
+          { name: '异常信号', type: 'scatter', xAxisIndex: 0, yAxisIndex: 0, data: [], symbol: 'diamond', symbolSize: 10, z: 20 }
+        )
+      }
+
+      // K-line pattern markers (dots above bars) per D-08
+      if (chartStore.showPatterns) {
+        const patternDotData = []
+        for (let i = 0; i < dates.length; i++) {
+          const pattern = patternMap.get(dates[i])
+          if (!pattern) continue
+          const high = data[i].high
+          const low = data[i].low
+          const offset = (high - low) * 0.4 || high * 0.015
+          patternDotData.push({
+            value: [i, high + offset],
+            itemStyle: { color: '#d1d4dc' }
+          })
+        }
+
+        series.push({
+          name: 'K线形态',
+          type: 'scatter',
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          data: patternDotData,
+          symbol: 'circle',
+          symbolSize: 6,
+          z: 20
+        })
+      } else {
+        series.push({
+          name: 'K线形态',
+          type: 'scatter',
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          data: [],
+          symbol: 'circle',
+          symbolSize: 6,
+          z: 20
+        })
       }
 
       // Indicator sub-charts
@@ -630,6 +763,24 @@ export default {
               indicatorLines.push('</div>')
             }
 
+            // Signal and pattern info in tooltip
+            const dateStr = candleParam.axisValue
+            const signal = signalMap.get(dateStr)
+            const pattern = patternMap.get(dateStr)
+            let vpaInfo = ''
+            if (signal || pattern) {
+              vpaInfo = '<div style="margin-top:4px;border-top:1px solid #363a45;padding-top:4px">'
+              if (signal) {
+                const isAnomaly = anomalyTypes.includes(signal.signal_type)
+                const signalColor = isAnomaly ? '#ffeb3b' : (signal.direction === 'up' ? '#26a69a' : '#ef5350')
+                vpaInfo += `<div style="color:${signalColor}">信号: ${signal.description}</div>`
+              }
+              if (pattern) {
+                vpaInfo += `<div style="color:#d1d4dc">形态: ${pattern.name} - ${pattern.description}</div>`
+              }
+              vpaInfo += '</div>'
+            }
+
             return `<div style="font-size:12px;line-height:1.6">
               <div style="margin-bottom:4px;font-weight:600">${date}</div>
               <div>开盘: ${open}  收盘: <span style="color:${changeColor}">${close}</span></div>
@@ -638,6 +789,7 @@ export default {
               <div>成交量: ${typeof vol === 'object' ? vol.value : vol}</div>
               <div style="margin-top:4px;border-top:1px solid ${BORDER_COLOR};padding-top:4px">${maLines}</div>
               ${indicatorLines.join('')}
+              ${vpaInfo}
             </div>`
           }
         },
