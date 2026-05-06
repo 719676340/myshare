@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-05-06T08:36:35.252Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-05-06T12:27:41.358Z"
 last_activity: 2026-05-06
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 9
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** 在真实 A 股数据上可视化量价分析理论 — 让用户通过看图、模拟练习、策略回测来学习交易
-**Current focus:** Phase 03 — advanced-analysis-features
+**Current focus:** Phase 04 — trading-practice-module
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (trading-practice-module) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-05-06
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | 3min | 2 tasks | 1 files |
 | Phase 03 P01 | 5min | 2 tasks | 3 files |
 | Phase 03 P02 | 10min | 3 tasks | 5 files |
+| Phase 04 P01 | 5min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Weekly K-line uses ISO week (Monday start), monthly uses YYYYMM grouping
 - [Phase 03]: VAP rendered as ECharts custom series with renderItem for horizontal bar overlay on price chart
 - [Phase 03]: S/R lines and trend lines share single toggle (showSR); market cycle uses separate toggle; multi-timeframe hides daily indicators
+- [Phase 04]: Position model uses remaining_shares per lot for FIFO sell matching
+- [Phase 04]: current_date initialized to last bar before start_date for context display
+- [Phase 04]: Equity curve built by replaying trades chronologically against daily close prices
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T08:36:35.249Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-trading-practice-module/04-CONTEXT.md
+Last session: 2026-05-06T12:27:41.356Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

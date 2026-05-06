@@ -47,14 +47,14 @@
 
 ### Trading Practice
 
-- [ ] **PRACT-01**: 用户可选择股票和练习时间范围，系统展示起始日之前的 K 线数据
-- [ ] **PRACT-02**: 用户逐日推进，不可回退，每次揭示下一天 K 线
-- [ ] **PRACT-03**: 用户可执行买入/卖出操作，支持仓位比例选择（半仓、全仓等）
-- [ ] **PRACT-04**: 初始资金可自定，默认 100 万
-- [ ] **PRACT-05**: 模拟 A 股交易费用：佣金万 2.5 + 印花税千 1（卖出时收取）
-- [ ] **PRACT-06**: 强制 T+1 规则：当天买入不可当天卖出
-- [ ] **PRACT-07**: 涨跌停价格限制执行（普通股 ±10%、ST ±5%、创业板/科创板 ±20%）
-- [ ] **PRACT-08**: 练习结束后展示最终收益、交易记录、每笔盈亏
+- [x] **PRACT-01**: 用户可选择股票和练习时间范围，系统展示起始日之前的 K 线数据
+- [x] **PRACT-02**: 用户逐日推进，不可回退，每次揭示下一天 K 线
+- [x] **PRACT-03**: 用户可执行买入/卖出操作，支持仓位比例选择（半仓、全仓等）
+- [x] **PRACT-04**: 初始资金可自定，默认 100 万
+- [x] **PRACT-05**: 模拟 A 股交易费用：佣金万 2.5 + 印花税千 1（卖出时收取）
+- [x] **PRACT-06**: 强制 T+1 规则：当天买入不可当天卖出
+- [x] **PRACT-07**: 涨跌停价格限制执行（普通股 ±10%、ST ±5%、创业板/科创板 ±20%）
+- [x] **PRACT-08**: 练习结束后展示最终收益、交易记录、每笔盈亏
 
 ### Strategy Backtesting
 
@@ -117,14 +117,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADVAN-03 | Phase 3 | Complete |
 | ADVAN-04 | Phase 3 | Complete |
 | ADVAN-05 | Phase 3 | Complete |
-| PRACT-01 | Phase 4 | Pending |
-| PRACT-02 | Phase 4 | Pending |
-| PRACT-03 | Phase 4 | Pending |
-| PRACT-04 | Phase 4 | Pending |
-| PRACT-05 | Phase 4 | Pending |
-| PRACT-06 | Phase 4 | Pending |
-| PRACT-07 | Phase 4 | Pending |
-| PRACT-08 | Phase 4 | Pending |
+| PRACT-01 | Phase 4 | Complete |
+| PRACT-02 | Phase 4 | Complete |
+| PRACT-03 | Phase 4 | Complete |
+| PRACT-04 | Phase 4 | Complete |
+| PRACT-05 | Phase 4 | Complete |
+| PRACT-06 | Phase 4 | Complete |
+| PRACT-07 | Phase 4 | Complete |
+| PRACT-08 | Phase 4 | Complete |
 | BACK-01 | Phase 5 | Pending |
 | BACK-02 | Phase 5 | Pending |
 | BACK-03 | Phase 5 | Pending |
