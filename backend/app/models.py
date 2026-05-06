@@ -22,6 +22,8 @@ class Stock(Base):
 
     # Relationship to daily bars
     daily_bars = relationship("DailyBar", back_populates="stock", lazy="selectin")
+    # Relationship to indicator values
+    indicator_values = relationship("IndicatorValue", back_populates="stock", lazy="selectin")
 
     def __repr__(self):
         return f"<Stock({self.ts_code} {self.name})>"
@@ -59,3 +61,52 @@ class DailyBar(Base):
 
     def __repr__(self):
         return f"<DailyBar({self.ts_code} {self.trade_date} close={self.close})>"
+
+
+class IndicatorValue(Base):
+    """Technical indicator computed values."""
+
+    __tablename__ = "indicator_values"
+    __table_args__ = (
+        UniqueConstraint(
+            "ts_code",
+            "trade_date",
+            "indicator_name",
+            "params_hash",
+            name="uq_indicator_ts_code_date_name_params",
+        ),
+        {"sqlite_autoincrement": True},
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ts_code = Column(
+        String(16),
+        ForeignKey("stocks.ts_code"),
+        index=True,
+        nullable=False,
+        comment="股票代码",
+    )
+    trade_date = Column(
+        String(8), index=True, nullable=False, comment="交易日期 YYYYMMDD"
+    )
+    indicator_name = Column(
+        String(16),
+        index=True,
+        nullable=False,
+        comment="Indicator: macd/rsi/kdj/boll",
+    )
+    params_hash = Column(
+        String(16),
+        index=True,
+        nullable=False,
+        comment="MD5 hash of params dict",
+    )
+    value_json = Column(
+        String, nullable=False, comment="JSON-encoded indicator values for this date"
+    )
+
+    # Relationship back to stock
+    stock = relationship("Stock", back_populates="indicator_values")
+
+    def __repr__(self):
+        return f"<IndicatorValue({self.ts_code} {self.trade_date} {self.indicator_name})>"

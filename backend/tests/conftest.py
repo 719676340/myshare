@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import DailyBar, Stock
+from app.models import DailyBar, IndicatorValue, Stock
 
 
 # Use in-memory SQLite for testing

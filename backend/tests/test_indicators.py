@@ -35,16 +35,10 @@ def _make_ohlcv_df(n_rows=50, seed=42):
     lows = np.minimum(opens, closes) - np.abs(rng.randn(n_rows) * 0.3)
     vols = 100000 + rng.randint(-20000, 20000, n_rows).astype(float)
 
-    dates = [f"202401{d:02d}" for d in range(1, n_rows + 1)]
-    # Handle dates beyond 31
-    dates = []
-    for i in range(n_rows):
-        month = 1 + i // 31
-        day = 1 + i % 31
-        if month <= 12 and day <= 28:
-            dates.append(f"2024{month:02d}{day:02d}")
-        else:
-            dates.append(f"202401{(i % 28) + 1:02d}")
+    # Generate unique sequential dates starting from 20240101
+    from datetime import date, timedelta
+    start = date(2024, 1, 1)
+    dates = [(start + timedelta(days=i)).strftime("%Y%m%d") for i in range(n_rows)]
 
     df = pd.DataFrame({
         "trade_date": dates,
