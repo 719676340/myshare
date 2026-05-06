@@ -23,9 +23,9 @@
 
 ### Volume-Price Analysis
 
-- [ ] **VPA-01**: 自动标记量价确认信号（放量上涨、缩量下跌）
-- [ ] **VPA-02**: 自动标记量价异常信号（长阳+低量陷阱、短阳+高量走弱、上涨量递减）
-- [ ] **VPA-03**: K 线形态自动识别（锤头线、射击十字星、十字星、吊人线等）
+- [x] **VPA-01**: 自动标记量价确认信号（放量上涨、缩量下跌）
+- [x] **VPA-02**: 自动标记量价异常信号（长阳+低量陷阱、短阳+高量走弱、上涨量递减）
+- [x] **VPA-03**: K 线形态自动识别（锤头线、射击十字星、十字星、吊人线等）
 - [ ] **VPA-04**: 量价背离检测（价格创新高但成交量下降等）
 
 ### Technical Indicators
@@ -102,9 +102,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHART-03 | Phase 1 | Complete |
 | CHART-04 | Phase 1 | Complete |
 | CHART-05 | Phase 1 | Complete |
-| VPA-01 | Phase 2 | Pending |
-| VPA-02 | Phase 2 | Pending |
-| VPA-03 | Phase 2 | Pending |
+| VPA-01 | Phase 2 | Complete |
+| VPA-02 | Phase 2 | Complete |
+| VPA-03 | Phase 2 | Complete |
 | VPA-04 | Phase 3 | Pending |
 | INDIC-01 | Phase 2 | Complete |
 | INDIC-02 | Phase 2 | Complete |

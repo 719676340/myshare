@@ -51,7 +51,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Backend: IndicatorValue model, indicator computation service (MACD/RSI/KDJ/BOLL), VPA signal detection, K-line pattern recognition, API endpoints
 - [x] 02-02-PLAN.md — Frontend: Indicator sub-charts (MACD/RSI/KDJ) with toggle buttons, BOLL overlay, Popover parameter panels, dynamic multi-grid chart layout
-- [ ] 02-03-PLAN.md — Frontend: VPA signal markers and K-line pattern annotations rendering, human verification of all Phase 2 features
+- [x] 02-03-PLAN.md — Frontend: VPA signal markers and K-line pattern annotations rendering, human verification of all Phase 2 features
 
 ### Phase 3: Advanced Analysis Features
 **Goal**: Users can see auto-detected support/resistance levels, trend lines, market cycle annotations, and volume-at-price distribution on the chart
