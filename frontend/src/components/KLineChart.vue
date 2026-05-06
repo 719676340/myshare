@@ -105,7 +105,19 @@ export default {
   components: {
     VChart
   },
-  setup() {
+  props: {
+    // Optional: fixed data array to use instead of stockStore.dailyData (practice mode)
+    fixedData: {
+      type: Array,
+      default: null
+    },
+    // Optional: buy/sell markers [{ date: string, type: 'buy'|'sell', price: number }]
+    buySellMarkers: {
+      type: Array,
+      default: null
+    }
+  },
+  setup(props) {
     const chartContainer = ref(null)
     const chartRef = ref(null)
     const stockStore = useStockStore()
@@ -145,7 +157,9 @@ export default {
     const chartOption = computed(() => {
       // Multi-timeframe support
       const isMultiTimeframe = chartStore.timeframe !== 'daily'
-      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : stockStore.dailyData
+      // Practice mode: props.fixedData overrides store data
+      const ohlcData = props.fixedData || stockStore.dailyData
+      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : ohlcData
       if (!rawData || rawData.length === 0) {
         return {}
       }
@@ -317,25 +331,32 @@ export default {
       }
 
       // Add support/resistance markLine to candlestick series
+      // Show only top N levels by strength to avoid clutter
       if (chartStore.showSR && stockStore.advancedData.levels.length > 0) {
-        const srMarkLineData = stockStore.advancedData.levels.map((level) => {
-          let lineColor
+        const sortedLevels = [...stockStore.advancedData.levels]
+          .sort((a, b) => b.strength - a.strength)
+          .slice(0, 8)
+        const srMarkLineData = sortedLevels.map((level) => {
+          let lineColor, labelPrefix
           if (level.type === 'resistance') {
-            lineColor = 'rgba(239,83,80,0.5)'
+            lineColor = 'rgba(239,83,80,0.6)'
+            labelPrefix = '阻力'
           } else if (level.type === 'support') {
-            lineColor = 'rgba(38,166,154,0.5)'
+            lineColor = 'rgba(38,166,154,0.6)'
+            labelPrefix = '支撑'
           } else {
             lineColor = 'rgba(255,235,59,0.5)'
+            labelPrefix = '支撑/阻力'
           }
           return {
             yAxis: level.price,
-            name: `${level.type} ${level.price}`,
+            name: `${labelPrefix} ${level.price}`,
             lineStyle: { type: 'dashed', color: lineColor, width: 1 },
             label: {
               show: true,
               position: 'end',
-              formatter: `${level.price}`,
-              color: TEXT_MUTED,
+              formatter: `${labelPrefix} ${level.price}`,
+              color: lineColor.replace(/[\d.]+\)$/, '1)'),
               fontSize: 10
             }
           }
@@ -607,33 +628,37 @@ export default {
               const bin = vapData[dataIndex]
               if (!bin) return
 
-              // Get pixel coordinates for price level
+              // Get pixel coordinates for price level boundaries
               const priceTop = api.coord([0, bin.price_level + binSize / 2])
               const priceBottom = api.coord([0, bin.price_level - binSize / 2])
               if (!priceTop || !priceBottom) return
 
-              const barPixelHeight = Math.max(Math.abs(priceTop[1] - priceBottom[1]), 1)
-              // Normalize volume to a percentage of the chart width
-              const vapMaxWidth = api.size([0.15, 0])[0] // 15% of chart width in pixels
+              const barPixelHeight = Math.max(Math.abs(priceTop[1] - priceBottom[1]), 2)
+
+              // Use coordSys for the actual visible grid pixel boundaries
+              // This works correctly regardless of zoom/pan state
+              const gridRight = params.coordSys.x + params.coordSys.width
+              const gridPixelWidth = params.coordSys.width
+              // VAP bars occupy the rightmost 20% of the chart
+              const vapMaxWidth = gridPixelWidth * 0.2
               const barPixelWidth = (bin.volume / maxVol) * vapMaxWidth
 
-              // Draw from right side of chart
-              const rightEdge = api.coord([dates.length - 1, 0])[0]
               const color = (bin.up_volume || 0) > (bin.down_volume || 0)
-                ? 'rgba(239,83,80,0.25)'
-                : 'rgba(38,166,154,0.25)'
+                ? 'rgba(239,83,80,0.3)'
+                : 'rgba(38,166,154,0.3)'
 
               return {
                 type: 'rect',
                 shape: {
-                  x: rightEdge - barPixelWidth,
+                  x: gridRight - barPixelWidth,
                   y: priceBottom[1],
                   width: barPixelWidth,
                   height: barPixelHeight
                 },
                 style: {
                   fill: color
-                }
+                },
+                clip: true
               }
             },
             z: 2,
@@ -911,7 +936,76 @@ export default {
           }
         })
 
+        // Add legend entries for the 4 cycle phases
+        const phaseLabels = {
+          accumulation: '吸筹',
+          markup: '上涨',
+          distribution: '派发',
+          markdown: '下跌'
+        }
+        for (const [phaseKey, phaseLabel] of Object.entries(phaseLabels)) {
+          legendData.push(phaseLabel)
+          series.push({
+            name: phaseLabel,
+            type: 'line',
+            xAxisIndex: cycleXAxisIndex,
+            yAxisIndex: cycleYAxisIndex,
+            data: [],
+            showSymbol: false,
+            lineStyle: { color: CYCLE_COLORS[phaseKey], width: 8 }
+          })
+        }
+
         currentTop += scaledCycle + scaledGap
+      }
+
+      // Buy/Sell markers for practice mode
+      if (props.buySellMarkers && props.buySellMarkers.length > 0) {
+        const buyMarkers = props.buySellMarkers
+          .filter(m => m.type === 'buy')
+          .map(m => {
+            const idx = rawData.findIndex(d => d.trade_date === m.date)
+            return idx >= 0 ? [idx, m.price] : null
+          })
+          .filter(Boolean)
+
+        const sellMarkers = props.buySellMarkers
+          .filter(m => m.type === 'sell')
+          .map(m => {
+            const idx = rawData.findIndex(d => d.trade_date === m.date)
+            return idx >= 0 ? [idx, m.price] : null
+          })
+          .filter(Boolean)
+
+        if (buyMarkers.length > 0) {
+          series.push({
+            type: 'scatter',
+            name: '买入',
+            data: buyMarkers,
+            symbol: 'triangle',
+            symbolSize: 14,
+            symbolRotate: 0,
+            itemStyle: { color: '#ef5350' },
+            zlevel: 10,
+            xAxisIndex: 0,
+            yAxisIndex: 0
+          })
+        }
+
+        if (sellMarkers.length > 0) {
+          series.push({
+            type: 'scatter',
+            name: '卖出',
+            data: sellMarkers,
+            symbol: 'triangle',
+            symbolSize: 14,
+            symbolRotate: 180,
+            itemStyle: { color: '#26a69a' },
+            zlevel: 10,
+            xAxisIndex: 0,
+            yAxisIndex: 0
+          })
+        }
       }
 
       // Show axis labels on the bottom-most grid
