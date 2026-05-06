@@ -20,6 +20,14 @@ export const useChartStore = defineStore('chart', {
     showSignals: true,
     showPatterns: true,
 
+    // Advanced analysis toggles (default OFF)
+    showSR: false,     // Support/resistance + trend lines (shared toggle per D-03)
+    showVAP: false,    // Volume-at-price overlay
+    showCycle: false,  // Market cycle phase bands
+
+    // Multi-timeframe selection
+    timeframe: 'daily', // 'daily' | 'weekly' | 'monthly'
+
     // Indicator parameters (defaults)
     indicatorParams: {
       macd: { fastperiod: 12, slowperiod: 26, signalperiod: 9 },
@@ -56,6 +64,24 @@ export const useChartStore = defineStore('chart', {
 
     resetDateRange() {
       this.dateRange = null
+    },
+
+    toggleSR() {
+      this.showSR = !this.showSR
+    },
+
+    toggleVAP() {
+      this.showVAP = !this.showVAP
+    },
+
+    toggleCycle() {
+      this.showCycle = !this.showCycle
+    },
+
+    setTimeframe(tf) {
+      if (['daily', 'weekly', 'monthly'].includes(tf)) {
+        this.timeframe = tf
+      }
     }
   }
 })

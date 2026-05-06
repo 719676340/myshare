@@ -86,4 +86,70 @@ export function getVPAData(tsCode) {
     .then((res) => res.data)
 }
 
+/**
+ * Get support/resistance levels for a stock
+ * @param {string} tsCode - stock code
+ * @returns {Promise<{ts_code: string, levels: Array}>}
+ */
+export function getSupportResistance(tsCode) {
+  return apiClient.get(`/advanced/${tsCode}/support-resistance`)
+    .then((res) => res.data)
+}
+
+/**
+ * Get trend lines for a stock
+ * @param {string} tsCode - stock code
+ * @returns {Promise<{ts_code: string, lines: Array}>}
+ */
+export function getTrendLines(tsCode) {
+  return apiClient.get(`/advanced/${tsCode}/trend-lines`)
+    .then((res) => res.data)
+}
+
+/**
+ * Get market cycle phases for a stock
+ * @param {string} tsCode - stock code
+ * @returns {Promise<{ts_code: string, phases: Array}>}
+ */
+export function getMarketCycle(tsCode) {
+  return apiClient.get(`/advanced/${tsCode}/market-cycle`)
+    .then((res) => res.data)
+}
+
+/**
+ * Get volume-at-price distribution for a stock
+ * @param {string} tsCode - stock code
+ * @param {string} [startDate] - optional start date YYYYMMDD
+ * @param {string} [endDate] - optional end date YYYYMMDD
+ * @returns {Promise<{ts_code: string, vap: Array, price_range: Object, total_volume: number}>}
+ */
+export function getVAPData(tsCode, startDate, endDate) {
+  const params = {}
+  if (startDate) params.start_date = startDate
+  if (endDate) params.end_date = endDate
+  return apiClient.get(`/advanced/${tsCode}/vap`, { params })
+    .then((res) => res.data)
+}
+
+/**
+ * Get multi-timeframe K-line data for a stock
+ * @param {string} tsCode - stock code
+ * @param {string} timeframe - "weekly" or "monthly"
+ * @returns {Promise<{ts_code: string, timeframe: string, data: Array}>}
+ */
+export function getMultiTimeframeData(tsCode, timeframe) {
+  return apiClient.get(`/advanced/${tsCode}/multi-timeframe`, { params: { timeframe } })
+    .then((res) => res.data)
+}
+
+/**
+ * Get price-volume divergence data for a stock
+ * @param {string} tsCode - stock code
+ * @returns {Promise<{ts_code: string, divergences: Array}>}
+ */
+export function getDivergenceData(tsCode) {
+  return apiClient.get(`/advanced/${tsCode}/divergence`)
+    .then((res) => res.data)
+}
+
 export default apiClient
