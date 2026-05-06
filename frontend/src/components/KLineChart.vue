@@ -1,10 +1,12 @@
 <template>
   <div class="kline-chart" ref="chartContainer">
     <v-chart
+      ref="chartRef"
       :option="chartOption"
       :autoresize="true"
       :loading="stockStore.isLoading"
       class="chart-instance"
+      @datazoom="handleDataZoom"
     />
   </div>
 </template>
@@ -12,7 +14,7 @@
 <script>
 import { computed, ref } from 'vue'
 import { use } from 'echarts/core'
-import { CandlestickChart, BarChart, LineChart, ScatterChart } from 'echarts/charts'
+import { CandlestickChart, BarChart, LineChart, ScatterChart, CustomChart } from 'echarts/charts'
 import {
   TitleComponent,
   TooltipComponent,
@@ -20,7 +22,8 @@ import {
   LegendComponent,
   DataZoomComponent,
   AxisPointerComponent,
-  MarkLineComponent
+  MarkLineComponent,
+  MarkAreaComponent
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
@@ -33,6 +36,7 @@ use([
   BarChart,
   LineChart,
   ScatterChart,
+  CustomChart,
   TitleComponent,
   TooltipComponent,
   GridComponent,
@@ -40,6 +44,7 @@ use([
   DataZoomComponent,
   AxisPointerComponent,
   MarkLineComponent,
+  MarkAreaComponent,
   CanvasRenderer
 ])
 
@@ -102,23 +107,57 @@ export default {
   },
   setup() {
     const chartContainer = ref(null)
+    const chartRef = ref(null)
     const stockStore = useStockStore()
     const chartStore = useChartStore()
 
+    // Debounced VAP dataZoom handler
+    let vapDebounceTimer = null
+
+    function handleDataZoom() {
+      if (!chartStore.showVAP || !stockStore.currentStock) return
+      clearTimeout(vapDebounceTimer)
+      vapDebounceTimer = setTimeout(() => {
+        const chart = chartRef.value?.chart
+        if (!chart) return
+        const option = chart.getOption()
+        if (!option.dataZoom || !option.dataZoom[0]) return
+        const startValue = option.dataZoom[0].startValue
+        const endValue = option.dataZoom[0].endValue
+        const dateData = option.xAxis[0].data
+        if (!dateData || dateData.length === 0) return
+        const startDate = dateData[Math.floor(startValue)] || dateData[0]
+        const endDate = dateData[Math.ceil(endValue)] || dateData[dateData.length - 1]
+        if (startDate && endDate) {
+          stockStore.fetchVAPData(startDate, endDate)
+        }
+      }, 500)
+    }
+
+    // Market cycle phase colors
+    const CYCLE_COLORS = {
+      accumulation: '#2196f3',
+      markup: '#4caf50',
+      distribution: '#ff9800',
+      markdown: '#f44336'
+    }
+
     const chartOption = computed(() => {
-      const data = stockStore.dailyData
-      if (!data || data.length === 0) {
+      // Multi-timeframe support
+      const isMultiTimeframe = chartStore.timeframe !== 'daily'
+      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : stockStore.dailyData
+      if (!rawData || rawData.length === 0) {
         return {}
       }
 
       // Extract chart data arrays
-      const dates = data.map((d) => d.trade_date)
-      const ohlc = data.map((d) => [d.open, d.close, d.low, d.high])
-      const volumes = data.map((d) => d.vol)
-      const closes = data.map((d) => d.close)
+      const dates = rawData.map((d) => d.trade_date)
+      const ohlc = rawData.map((d) => [d.open, d.close, d.low, d.high])
+      const volumes = rawData.map((d) => d.vol)
+      const closes = rawData.map((d) => d.close)
 
       // Volume data with per-bar color based on up/down
-      const volumeData = data.map((d) => ({
+      const volumeData = rawData.map((d) => ({
         value: d.vol,
         itemStyle: {
           color: d.close >= d.open ? UP_COLOR : DOWN_COLOR,
@@ -133,32 +172,42 @@ export default {
       const ma60Data = calculateMA(closes, 60)
 
       // Default show last 120 bars
-      const totalBars = data.length
+      const totalBars = rawData.length
       const defaultShowBars = 120
       const startPercent = totalBars > defaultShowBars
         ? ((totalBars - defaultShowBars) / totalBars) * 100
         : 0
 
-      // Determine active indicator sub-charts
+      // Determine active indicator sub-charts (skip in multi-timeframe mode)
       const activeIndicators = []
-      if (chartStore.showMACD) activeIndicators.push('macd')
-      if (chartStore.showRSI) activeIndicators.push('rsi')
-      if (chartStore.showKDJ) activeIndicators.push('kdj')
+      if (!isMultiTimeframe) {
+        if (chartStore.showMACD) activeIndicators.push('macd')
+        if (chartStore.showRSI) activeIndicators.push('rsi')
+        if (chartStore.showKDJ) activeIndicators.push('kdj')
+      }
+
+      // Determine if we need a market cycle grid
+      const showCycleGrid = chartStore.showCycle && stockStore.advancedData.phases.length > 0
 
       // Calculate grid layout
-      // Base: K-line + volume. Each indicator adds a sub-chart.
-      // Heights: K-line=35%, volume=12%, each indicator=15%
+      // Base: K-line + volume. Each indicator adds a sub-chart. Cycle adds a narrow strip.
       const klineHeight = 35
       const volumeHeight = 12
       const indicatorHeight = 15
-      const gap = 2 // gap between grids
-      const totalHeight = klineHeight + gap + volumeHeight + gap + activeIndicators.length * (indicatorHeight + gap)
+      const cycleHeight = 3
+      const gap = 2
+      let totalHeight = klineHeight + gap + volumeHeight + gap
+      totalHeight += activeIndicators.length * (indicatorHeight + gap)
+      if (showCycleGrid) {
+        totalHeight += cycleHeight + gap
+      }
 
       // Scale factor to fit everything in 100%
       const scale = totalHeight > 100 ? 100 / totalHeight : 1
       const scaledKline = klineHeight * scale
       const scaledVolume = volumeHeight * scale
       const scaledIndicator = indicatorHeight * scale
+      const scaledCycle = cycleHeight * scale
       const scaledGap = gap * scale
 
       // Build grids dynamically
@@ -233,10 +282,10 @@ export default {
 
       // Build MA series
       const maSeries = [
-        { key: 'ma5', name: 'MA5', data: ma5Data, period: 5 },
-        { key: 'ma10', name: 'MA10', data: ma10Data, period: 10 },
-        { key: 'ma20', name: 'MA20', data: ma20Data, period: 20 },
-        { key: 'ma60', name: 'MA60', data: ma60Data, period: 60 }
+        { key: 'ma5', name: 'MA5', data: ma5Data },
+        { key: 'ma10', name: 'MA10', data: ma10Data },
+        { key: 'ma20', name: 'MA20', data: ma20Data },
+        { key: 'ma60', name: 'MA60', data: ma60Data }
       ].map(({ key, name, data: maData }) => ({
         name,
         type: 'line',
@@ -252,8 +301,8 @@ export default {
         z: 5
       }))
 
-      // Candlestick series
-      series.push({
+      // Candlestick series with optional S/R markLine
+      const candlestickSeries = {
         name: 'K线',
         type: 'candlestick',
         xAxisIndex: 0,
@@ -265,7 +314,40 @@ export default {
           borderColor: UP_COLOR,
           borderColor0: DOWN_COLOR
         }
-      })
+      }
+
+      // Add support/resistance markLine to candlestick series
+      if (chartStore.showSR && stockStore.advancedData.levels.length > 0) {
+        const srMarkLineData = stockStore.advancedData.levels.map((level) => {
+          let lineColor
+          if (level.type === 'resistance') {
+            lineColor = 'rgba(239,83,80,0.5)'
+          } else if (level.type === 'support') {
+            lineColor = 'rgba(38,166,154,0.5)'
+          } else {
+            lineColor = 'rgba(255,235,59,0.5)'
+          }
+          return {
+            yAxis: level.price,
+            name: `${level.type} ${level.price}`,
+            lineStyle: { type: 'dashed', color: lineColor, width: 1 },
+            label: {
+              show: true,
+              position: 'end',
+              formatter: `${level.price}`,
+              color: TEXT_MUTED,
+              fontSize: 10
+            }
+          }
+        })
+        candlestickSeries.markLine = {
+          silent: true,
+          symbol: 'none',
+          data: srMarkLineData
+        }
+      }
+
+      series.push(candlestickSeries)
 
       // Volume series
       series.push({
@@ -280,8 +362,8 @@ export default {
       // MA lines
       series.push(...maSeries)
 
-      // BOLL overlay on K-line main chart (grid 0)
-      if (chartStore.showBOLL && stockStore.indicatorData.boll) {
+      // BOLL overlay (skip in multi-timeframe mode)
+      if (!isMultiTimeframe && chartStore.showBOLL && stockStore.indicatorData.boll) {
         const bollData = stockStore.indicatorData.boll.data
         const upperData = alignIndicatorData(dates, bollData, 'upper')
         const middleData = alignIndicatorData(dates, bollData, 'middle')
@@ -323,19 +405,55 @@ export default {
         legendData.push('BOLL上轨', 'BOLL中轨', 'BOLL下轨')
       }
 
-      // Build signal and pattern lookup maps
-      const signalMap = new Map(
+      // Trend lines (shared toggle with S/R per D-03)
+      if (chartStore.showSR && stockStore.advancedData.trendLines.length > 0) {
+        // Build date-to-index lookup
+        const dateIndexMap = new Map(dates.map((d, i) => [d, i]))
+
+        for (const line of stockStore.advancedData.trendLines) {
+          const startIdx = dateIndexMap.get(line.start_date)
+          const endIdx = dateIndexMap.get(line.end_date)
+          if (startIdx == null) continue
+          const finalEndIdx = endIdx != null ? endIdx : (dates.length - 1)
+
+          const lineData = new Array(dates.length).fill(null)
+          lineData[startIdx] = line.start_price
+          lineData[finalEndIdx] = line.end_price
+
+          series.push({
+            name: '趋势线',
+            type: 'line',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: lineData,
+            smooth: false,
+            showSymbol: false,
+            connectNulls: true,
+            lineStyle: { type: 'dashed', color: '#787b86', width: 1, opacity: 0.6 },
+            z: 3,
+            tooltip: { show: false }
+          })
+        }
+      }
+
+      // Build signal and pattern lookup maps (skip in multi-timeframe mode)
+      const signalMap = isMultiTimeframe ? new Map() : new Map(
         (stockStore.vpaData.signals || []).map(s => [s.trade_date, s])
       )
-      const patternMap = new Map(
+      const patternMap = isMultiTimeframe ? new Map() : new Map(
         (stockStore.vpaData.patterns || []).map(p => [p.trade_date, p])
+      )
+
+      // Build divergence lookup map
+      const divergenceMap = new Map(
+        (stockStore.advancedData.divergences || []).map(d => [d.trade_date, d])
       )
 
       // Determine anomaly signal types (visually distinct from confirmation)
       const anomalyTypes = ['long_candle_low_volume', 'short_candle_high_volume', 'rising_volume_decline']
 
-      // Confirmation signal markers (triangles) per D-06
-      if (chartStore.showSignals) {
+      // Confirmation signal markers (triangles) per D-06 (skip in multi-timeframe)
+      if (!isMultiTimeframe && chartStore.showSignals) {
         // Build confirmation signal data (up and down separately for different symbols)
         const confirmUpData = []
         const confirmDownData = []
@@ -343,8 +461,8 @@ export default {
         for (let i = 0; i < dates.length; i++) {
           const signal = signalMap.get(dates[i])
           if (!signal || anomalyTypes.includes(signal.signal_type)) continue
-          const high = data[i].high
-          const low = data[i].low
+          const high = rawData[i].high
+          const low = rawData[i].low
           const offset = (high - low) * 0.3 || high * 0.01
           if (signal.direction === 'up') {
             confirmUpData.push({
@@ -384,18 +502,30 @@ export default {
           z: 20
         })
 
-        // Anomaly signal markers (diamonds, yellow) per D-07
+        // Anomaly + divergence signal markers (diamonds, yellow) per D-07
         const anomalyData = []
         for (let i = 0; i < dates.length; i++) {
           const signal = signalMap.get(dates[i])
-          if (!signal || !anomalyTypes.includes(signal.signal_type)) continue
-          const high = data[i].high
-          const low = data[i].low
-          const offset = (high - low) * 0.3 || high * 0.01
-          anomalyData.push({
-            value: [i, high + offset],
-            itemStyle: { color: '#ffeb3b' }
-          })
+          if (signal && anomalyTypes.includes(signal.signal_type)) {
+            const high = rawData[i].high
+            const low = rawData[i].low
+            const offset = (high - low) * 0.3 || high * 0.01
+            anomalyData.push({
+              value: [i, high + offset],
+              itemStyle: { color: '#ffeb3b' }
+            })
+          }
+          // Divergence signals (yellow diamonds) per VPA-04
+          const divergence = divergenceMap.get(dates[i])
+          if (divergence) {
+            const high = rawData[i].high
+            const low = rawData[i].low
+            const offset = (high - low) * 0.5 || high * 0.015
+            anomalyData.push({
+              value: [i, high + offset],
+              itemStyle: { color: '#ffeb3b' }
+            })
+          }
         }
 
         series.push({
@@ -417,14 +547,14 @@ export default {
         )
       }
 
-      // K-line pattern markers (dots above bars) per D-08
-      if (chartStore.showPatterns) {
+      // K-line pattern markers (dots above bars) per D-08 (skip in multi-timeframe)
+      if (!isMultiTimeframe && chartStore.showPatterns) {
         const patternDotData = []
         for (let i = 0; i < dates.length; i++) {
           const pattern = patternMap.get(dates[i])
           if (!pattern) continue
-          const high = data[i].high
-          const low = data[i].low
+          const high = rawData[i].high
+          const low = rawData[i].low
           const offset = (high - low) * 0.4 || high * 0.015
           patternDotData.push({
             value: [i, high + offset],
@@ -453,6 +583,63 @@ export default {
           symbolSize: 6,
           z: 20
         })
+      }
+
+      // VAP histogram overlay (custom series) per ADVAN-04
+      if (chartStore.showVAP && stockStore.advancedData.vap.length > 0) {
+        const vapData = stockStore.advancedData.vap
+        const maxVol = Math.max(...vapData.map(v => v.volume))
+        if (maxVol > 0) {
+          // Calculate bin size from VAP data
+          const priceLevels = vapData.map(v => v.price_level).sort((a, b) => a - b)
+          const binSize = priceLevels.length > 1 ? priceLevels[1] - priceLevels[0] : 0.5
+
+          series.push({
+            name: 'VAP',
+            type: 'custom',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: vapData.map(bin => ({
+              value: [dates.length - 1, bin.price_level, bin.volume, bin.up_volume || 0, bin.down_volume || 0]
+            })),
+            renderItem: function (params, api) {
+              const dataIndex = params.dataIndex
+              const bin = vapData[dataIndex]
+              if (!bin) return
+
+              // Get pixel coordinates for price level
+              const priceTop = api.coord([0, bin.price_level + binSize / 2])
+              const priceBottom = api.coord([0, bin.price_level - binSize / 2])
+              if (!priceTop || !priceBottom) return
+
+              const barPixelHeight = Math.max(Math.abs(priceTop[1] - priceBottom[1]), 1)
+              // Normalize volume to a percentage of the chart width
+              const vapMaxWidth = api.size([0.15, 0])[0] // 15% of chart width in pixels
+              const barPixelWidth = (bin.volume / maxVol) * vapMaxWidth
+
+              // Draw from right side of chart
+              const rightEdge = api.coord([dates.length - 1, 0])[0]
+              const color = (bin.up_volume || 0) > (bin.down_volume || 0)
+                ? 'rgba(239,83,80,0.25)'
+                : 'rgba(38,166,154,0.25)'
+
+              return {
+                type: 'rect',
+                shape: {
+                  x: rightEdge - barPixelWidth,
+                  y: priceBottom[1],
+                  width: barPixelWidth,
+                  height: barPixelHeight
+                },
+                style: {
+                  fill: color
+                }
+              }
+            },
+            z: 2,
+            silent: true
+          })
+        }
       }
 
       // Indicator sub-charts
@@ -643,6 +830,90 @@ export default {
         currentTop += scaledIndicator + scaledGap
       }
 
+      // Market cycle grid and bands
+      if (showCycleGrid) {
+        const cycleGridIndex = grids.length
+        const cycleXAxisIndex = xAxes.length
+        const cycleYAxisIndex = yAxes.length
+
+        grids.push({
+          left: 60,
+          right: 60,
+          top: currentTop + '%',
+          height: scaledCycle + '%'
+        })
+
+        xAxes.push({
+          type: 'category',
+          data: dates,
+          gridIndex: cycleGridIndex,
+          axisLine: { lineStyle: { color: BORDER_COLOR } },
+          axisLabel: { show: false },
+          axisTick: { show: false },
+          boundaryGap: true,
+          min: 'dataMin',
+          max: 'dataMax'
+        })
+
+        yAxes.push({
+          type: 'value',
+          gridIndex: cycleGridIndex,
+          show: false,
+          min: 0,
+          max: 1
+        })
+
+        allXAxisIndices.push(cycleXAxisIndex)
+
+        // Build markArea data for phases
+        const dateIndexMap = new Map(dates.map((d, i) => [d, i]))
+        const phaseMarkArea = []
+
+        for (const phase of stockStore.advancedData.phases) {
+          const startIdx = dateIndexMap.get(phase.start_date)
+          let endIdx = dateIndexMap.get(phase.end_date)
+          if (startIdx == null) continue
+          if (endIdx == null) endIdx = dates.length - 1
+
+          const phaseColor = CYCLE_COLORS[phase.phase] || '#787b86'
+          phaseMarkArea.push({
+            name: phase.phase,
+            xAxis: startIdx,
+            xAxisEnd: endIdx,
+            itemStyle: {
+              color: phaseColor,
+              opacity: 0.3
+            }
+          })
+        }
+
+        // Invisible line series with markArea for cycle bands
+        series.push({
+          name: '市场循环',
+          type: 'line',
+          xAxisIndex: cycleXAxisIndex,
+          yAxisIndex: cycleYAxisIndex,
+          data: dates.map(() => 0.5),
+          showSymbol: false,
+          lineStyle: { width: 0 },
+          markArea: {
+            silent: true,
+            data: phaseMarkArea.map(area => [
+              {
+                xAxis: area.xAxis,
+                itemStyle: area.itemStyle,
+                name: area.name
+              },
+              {
+                xAxis: area.xAxisEnd
+              }
+            ])
+          }
+        })
+
+        currentTop += scaledCycle + scaledGap
+      }
+
       // Show axis labels on the bottom-most grid
       if (xAxes.length > 0) {
         xAxes[xAxes.length - 1].axisLabel = {
@@ -763,26 +1034,40 @@ export default {
               indicatorLines.push('</div>')
             }
 
-            // Signal and pattern info in tooltip
-            const dateStr = candleParam.axisValue
-            const signal = signalMap.get(dateStr)
-            const pattern = patternMap.get(dateStr)
+            // Signal and pattern info in tooltip (skip in multi-timeframe)
             let vpaInfo = ''
-            if (signal || pattern) {
-              vpaInfo = '<div style="margin-top:4px;border-top:1px solid #363a45;padding-top:4px">'
-              if (signal) {
-                const isAnomaly = anomalyTypes.includes(signal.signal_type)
-                const signalColor = isAnomaly ? '#ffeb3b' : (signal.direction === 'up' ? '#26a69a' : '#ef5350')
-                vpaInfo += `<div style="color:${signalColor}">信号: ${signal.description}</div>`
+            if (!isMultiTimeframe) {
+              const dateStr = candleParam.axisValue
+              const signal = signalMap.get(dateStr)
+              const pattern = patternMap.get(dateStr)
+              if (signal || pattern) {
+                vpaInfo = '<div style="margin-top:4px;border-top:1px solid #363a45;padding-top:4px">'
+                if (signal) {
+                  const isAnomaly = anomalyTypes.includes(signal.signal_type)
+                  const signalColor = isAnomaly ? '#ffeb3b' : (signal.direction === 'up' ? '#26a69a' : '#ef5350')
+                  vpaInfo += `<div style="color:${signalColor}">信号: ${signal.description}</div>`
+                }
+                if (pattern) {
+                  vpaInfo += `<div style="color:#d1d4dc">形态: ${pattern.name} - ${pattern.description}</div>`
+                }
+                vpaInfo += '</div>'
               }
-              if (pattern) {
-                vpaInfo += `<div style="color:#d1d4dc">形态: ${pattern.name} - ${pattern.description}</div>`
-              }
-              vpaInfo += '</div>'
             }
 
+            // Divergence info in tooltip
+            const divergence = divergenceMap.get(candleParam.axisValue)
+            let divInfo = ''
+            if (divergence) {
+              divInfo = '<div style="margin-top:4px;border-top:1px solid #363a45;padding-top:4px">'
+              divInfo += `<div style="color:#ffeb3b">背离: ${divergence.description}</div>`
+              divInfo += '</div>'
+            }
+
+            // Timeframe label
+            const tfLabel = isMultiTimeframe ? (chartStore.timeframe === 'weekly' ? '周K' : '月K') : ''
+
             return `<div style="font-size:12px;line-height:1.6">
-              <div style="margin-bottom:4px;font-weight:600">${date}</div>
+              <div style="margin-bottom:4px;font-weight:600">${tfLabel ? tfLabel + ' ' : ''}${date}</div>
               <div>开盘: ${open}  收盘: <span style="color:${changeColor}">${close}</span></div>
               <div>最高: ${high}  最低: ${low}</div>
               <div>涨跌: <span style="color:${changeColor}">${arrow} ${change.toFixed(2)} (${changePct}%)</span></div>
@@ -790,6 +1075,7 @@ export default {
               <div style="margin-top:4px;border-top:1px solid ${BORDER_COLOR};padding-top:4px">${maLines}</div>
               ${indicatorLines.join('')}
               ${vpaInfo}
+              ${divInfo}
             </div>`
           }
         },
@@ -799,8 +1085,10 @@ export default {
 
     return {
       chartContainer,
+      chartRef,
       chartOption,
-      stockStore
+      stockStore,
+      handleDataZoom
     }
   }
 }
