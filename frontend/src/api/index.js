@@ -152,4 +152,86 @@ export function getDivergenceData(tsCode) {
     .then((res) => res.data)
 }
 
+/**
+ * Create a practice session
+ * @param {string} tsCode - stock code
+ * @param {string} startDate - start date YYYYMMDD
+ * @param {string} endDate - end date YYYYMMDD
+ * @param {number} [initialCapital=1000000] - starting capital
+ * @returns {Promise<{status: string, session_id: number}>}
+ */
+export function createPracticeSession(tsCode, startDate, endDate, initialCapital = 1000000) {
+  return apiClient.post('/practice/sessions', {
+    ts_code: tsCode,
+    start_date: startDate,
+    end_date: endDate,
+    initial_capital: initialCapital
+  }).then((res) => res.data)
+}
+
+/**
+ * Get practice session state including visible K-line data
+ * @param {number} sessionId
+ * @returns {Promise<Object>}
+ */
+export function getPracticeSession(sessionId) {
+  return apiClient.get(`/practice/sessions/${sessionId}`)
+    .then((res) => res.data)
+}
+
+/**
+ * Advance to the next trading day
+ * @param {number} sessionId
+ * @returns {Promise<{current_date: string, bar: Object, is_final: boolean}>}
+ */
+export function advancePracticeDay(sessionId) {
+  return apiClient.post(`/practice/sessions/${sessionId}/advance`)
+    .then((res) => res.data)
+}
+
+/**
+ * Place a buy order
+ * @param {number} sessionId
+ * @param {number} shares - number of shares
+ * @param {number} price - order price
+ * @returns {Promise<{trade: Object, message: string}>}
+ */
+export function placeBuyOrder(sessionId, shares, price) {
+  return apiClient.post(`/practice/sessions/${sessionId}/buy`, { shares, price })
+    .then((res) => res.data)
+}
+
+/**
+ * Place a sell order
+ * @param {number} sessionId
+ * @param {number} positionId - position lot ID to sell from
+ * @param {number} shares - number of shares to sell
+ * @param {number} price - order price
+ * @returns {Promise<{trade: Object, message: string}>}
+ */
+export function placeSellOrder(sessionId, positionId, shares, price) {
+  return apiClient.post(`/practice/sessions/${sessionId}/sell`, { position_id: positionId, shares, price })
+    .then((res) => res.data)
+}
+
+/**
+ * End a practice session early
+ * @param {number} sessionId
+ * @returns {Promise<{status: string, message: string}>}
+ */
+export function endPracticeSession(sessionId) {
+  return apiClient.post(`/practice/sessions/${sessionId}/end`)
+    .then((res) => res.data)
+}
+
+/**
+ * Get practice session statistics
+ * @param {number} sessionId
+ * @returns {Promise<Object>}
+ */
+export function getPracticeStats(sessionId) {
+  return apiClient.get(`/practice/sessions/${sessionId}/stats`)
+    .then((res) => res.data)
+}
+
 export default apiClient
