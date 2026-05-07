@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Technical Indicators + Volume-Price Analysis** - MACD/RSI/KDJ/BOLL indicators, MA overlays, volume-price signal markers, K-line pattern recognition
 - [ ] **Phase 3: Advanced Analysis Features** - Support/resistance detection, trend lines, market cycle annotation, VAP distribution, multi-timeframe analysis
 - [ ] **Phase 4: Trading Practice Module** - Day-by-day forward simulation with A-share rules (T+1, price limits, fees), position management, performance stats
-- [ ] **Phase 5: Strategy Backtesting Module** - Preset strategy templates, parameter tuning, comprehensive metrics, equity curve with buy/sell markers
+- [ ] **Phase 5: Strategy Backtesting Module** - Preset strategy templates, custom indicator builder, condition groups, comprehensive metrics, equity curve with buy/sell markers
 
 ## Phase Details
 
@@ -87,19 +87,21 @@ Plans:
 - [x] 04-02: TBD
 
 ### Phase 5: Strategy Backtesting Module
-**Goal**: Users can run automated backtests with preset strategy templates and see comprehensive performance metrics visualized
+**Goal**: Users can run automated backtests with preset strategy templates and custom indicator expressions, configure buy/sell conditions with nested AND/OR groups, and see comprehensive performance metrics with equity curves and K-line trade markers
 **Depends on**: Phase 2, Phase 4
-**Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05
+**Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, DATA-05
 **Success Criteria** (what must be TRUE):
-  1. User can select from preset strategy templates (MA crossover, volume breakout, MACD divergence) and adjust parameters
-  2. Backtest outputs comprehensive metrics: total return, annualized return, max drawdown, trade count, win rate, profit factor, Sharpe ratio, avg holding period
-  3. Equity curve is displayed showing strategy net value vs. buy-and-hold benchmark
-  4. Individual trade buy/sell points are marked on the K-line chart for visual inspection
-**Plans**: TBD
+  1. User can select from preset strategy templates (MA crossover, volume breakout, MACD divergence) and adjust parameters, or build custom strategies from scratch
+  2. User can define custom indicator expressions (e.g. VOL/MA(VOL,20)) with real-time validation
+  3. User can build nested AND/OR buy/sell condition groups with 11 operators
+  4. Backtest outputs comprehensive metrics: total return, annualized return, max drawdown, trade count, win rate, profit factor, Sharpe ratio, avg holding period
+  5. Equity curve is displayed showing strategy net value vs. buy-and-hold benchmark (dual-line)
+  6. Individual trade buy/sell points are marked on the K-line chart for visual inspection
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Backend: AST expression parser, backtest engine with daily iteration + A-share rules + condition evaluation, BacktestSession/Trade models, 6 REST API endpoints, preset strategy templates
+- [ ] 05-02-PLAN.md — Frontend: Backtest store, preset selector, indicator builder with validation, recursive condition group components, results display (8 metrics + dual-line equity curve + K-line markers + trade table), BacktestView page assembly, human verification
 
 ## Progress
 
@@ -112,4 +114,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Technical Indicators + Volume-Price Analysis | 0/3 | Planned | - |
 | 3. Advanced Analysis Features | 0/3 | Planned | - |
 | 4. Trading Practice Module | 0/? | Not started | - |
-| 5. Strategy Backtesting Module | 0/? | Not started | - |
+| 5. Strategy Backtesting Module | 0/2 | Planned | - |
