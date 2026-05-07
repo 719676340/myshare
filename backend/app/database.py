@@ -37,5 +37,5 @@ async def init_db():
     """Initialize database tables. Called on application startup."""
     async with engine.begin() as conn:
         # Import models so they register with Base.metadata
-        from app.models import Stock, DailyBar, IndicatorValue, PracticeSession, Trade, Position  # noqa: F401
+        from app.models import Stock, DailyBar, IndicatorValue, PracticeSession, Trade, Position, BacktestSession, BacktestTrade  # noqa: F401
         await conn.run_sync(Base.metadata.create_all)

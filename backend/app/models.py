@@ -1,6 +1,6 @@
 """SQLAlchemy ORM models for Stock and DailyBar tables."""
 
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Column, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -131,6 +131,7 @@ class PracticeSession(Base):
     current_date = Column(String(8), nullable=True, comment="当前推进到的日期")
     cash = Column(Float, nullable=False, comment="当前可用资金")
     status = Column(String(16), nullable=False, default="active", comment="状态: active/finished")
+    notes = Column(Text, nullable=True, default="", comment="用户备注")
     created_at = Column(String(19), nullable=False, comment="创建时间 ISO datetime")
 
     stock = relationship("Stock")
@@ -201,3 +202,62 @@ class Position(Base):
 
     def __repr__(self):
         return f"<Position({self.id} {self.ts_code} remaining={self.remaining_shares})>"
+
+
+class BacktestSession(Base):
+    """Strategy backtest session."""
+
+    __tablename__ = "backtest_sessions"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ts_code = Column(
+        String(16),
+        ForeignKey("stocks.ts_code"),
+        nullable=False,
+        comment="股票代码",
+    )
+    stock_name = Column(String(32), nullable=True, default="", comment="股票名称")
+    start_date = Column(String(8), nullable=False, comment="回测起始日期 YYYYMMDD")
+    end_date = Column(String(8), nullable=False, comment="回测结束日期 YYYYMMDD")
+    initial_capital = Column(Float, nullable=False, default=1000000.0, comment="初始资金")
+    indicators_config = Column(Text, nullable=False, comment="JSON: 指标配置")
+    buy_conditions = Column(Text, nullable=False, comment="JSON: 买入条件树")
+    sell_conditions = Column(Text, nullable=False, comment="JSON: 卖出条件树")
+    statistics = Column(Text, nullable=True, comment="JSON: 回测统计结果")
+    status = Column(String(16), nullable=False, default="completed", comment="状态")
+    created_at = Column(String(19), nullable=False, comment="创建时间 ISO datetime")
+
+    stock = relationship("Stock")
+    trades = relationship("BacktestTrade", back_populates="session", lazy="selectin")
+
+    def __repr__(self):
+        return f"<BacktestSession({self.id} {self.ts_code} {self.status})>"
+
+
+class BacktestTrade(Base):
+    """Individual backtest trade record."""
+
+    __tablename__ = "backtest_trades"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("backtest_sessions.id"),
+        nullable=False,
+        index=True,
+        comment="会话ID",
+    )
+    trade_type = Column(String(4), nullable=False, comment="交易类型: buy/sell")
+    trade_date = Column(String(8), nullable=False, comment="交易日期 YYYYMMDD")
+    shares = Column(Integer, nullable=False, comment="股数")
+    price = Column(Float, nullable=False, comment="成交价格")
+    amount = Column(Float, nullable=False, comment="成交金额")
+    commission = Column(Float, nullable=False, default=0.0, comment="佣金")
+    stamp_tax = Column(Float, nullable=False, default=0.0, comment="印花税")
+
+    session = relationship("BacktestSession", back_populates="trades")
+
+    def __repr__(self):
+        return f"<BacktestTrade({self.id} {self.trade_type} {self.trade_date})>"
