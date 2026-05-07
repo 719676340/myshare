@@ -959,13 +959,17 @@ export default {
         currentTop += scaledCycle + scaledGap
       }
 
-      // Buy/Sell markers for practice mode
+      // Buy/Sell markers for backtest/trade results
       if (props.buySellMarkers && props.buySellMarkers.length > 0) {
+        // Offset so triangle tip points to the candle without overlapping
         const buyMarkers = props.buySellMarkers
           .filter(m => m.type === 'buy')
           .map(m => {
             const idx = rawData.findIndex(d => d.trade_date === m.date)
-            return idx >= 0 ? [idx, m.price] : null
+            if (idx < 0) return null
+            const low = rawData[idx].low
+            const offset = (rawData[idx].high - low) * 0.3 || low * 0.01
+            return [idx, low - offset]
           })
           .filter(Boolean)
 
@@ -973,7 +977,10 @@ export default {
           .filter(m => m.type === 'sell')
           .map(m => {
             const idx = rawData.findIndex(d => d.trade_date === m.date)
-            return idx >= 0 ? [idx, m.price] : null
+            if (idx < 0) return null
+            const high = rawData[idx].high
+            const offset = (high - rawData[idx].low) * 0.3 || high * 0.01
+            return [idx, high + offset]
           })
           .filter(Boolean)
 
