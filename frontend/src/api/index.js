@@ -193,24 +193,22 @@ export function advancePracticeDay(sessionId) {
  * Place a buy order
  * @param {number} sessionId
  * @param {number} shares - number of shares
- * @param {number} price - order price
  * @returns {Promise<{trade: Object, message: string}>}
  */
-export function placeBuyOrder(sessionId, shares, price) {
-  return apiClient.post(`/practice/sessions/${sessionId}/buy`, { shares, price })
+export function placeBuyOrder(sessionId, shares) {
+  return apiClient.post(`/practice/sessions/${sessionId}/buy`, { shares })
     .then((res) => res.data)
 }
 
 /**
- * Place a sell order
+ * Place a sell order (uses current day's close price)
  * @param {number} sessionId
  * @param {number} positionId - position lot ID to sell from
  * @param {number} shares - number of shares to sell
- * @param {number} price - order price
  * @returns {Promise<{trade: Object, message: string}>}
  */
-export function placeSellOrder(sessionId, positionId, shares, price) {
-  return apiClient.post(`/practice/sessions/${sessionId}/sell`, { position_id: positionId, shares, price })
+export function placeSellOrder(sessionId, positionId, shares) {
+  return apiClient.post(`/practice/sessions/${sessionId}/sell`, { position_id: positionId, shares })
     .then((res) => res.data)
 }
 
@@ -232,6 +230,92 @@ export function endPracticeSession(sessionId) {
 export function getPracticeStats(sessionId) {
   return apiClient.get(`/practice/sessions/${sessionId}/stats`)
     .then((res) => res.data)
+}
+
+/**
+ * List practice sessions with optional filtering
+ * @param {Object} params - { status, ts_code, limit, offset }
+ * @returns {Promise<{items: Array, total: number}>}
+ */
+export function listPracticeSessions(params = {}) {
+  return apiClient.get('/practice/sessions', { params })
+    .then((res) => res.data)
+}
+
+/**
+ * Delete a practice session
+ * @param {number} sessionId
+ * @returns {Promise<{status: string, message: string}>}
+ */
+export function deletePracticeSession(sessionId) {
+  return apiClient.delete(`/practice/sessions/${sessionId}`)
+    .then((res) => res.data)
+}
+
+/**
+ * Update notes for a practice session
+ * @param {number} sessionId
+ * @param {string} notes
+ * @returns {Promise<{status: string, message: string}>}
+ */
+export function updateSessionNotes(sessionId, notes) {
+  return apiClient.patch(`/practice/sessions/${sessionId}/notes`, { notes })
+    .then((res) => res.data)
+}
+
+// ========== Backtest API ==========
+
+/**
+ * Run a strategy backtest
+ * @param {Object} config - backtest configuration
+ * @returns {Promise<Object>}
+ */
+export function runBacktest(config) {
+  return apiClient.post('/backtest/run', config)
+}
+
+/**
+ * Get preset strategy templates
+ * @returns {Promise<Array>}
+ */
+export function getBacktestPresets() {
+  return apiClient.get('/backtest/presets')
+}
+
+/**
+ * List backtest session history
+ * @param {Object} params - { ts_code, limit, offset }
+ * @returns {Promise<Object>}
+ */
+export function listBacktestSessions(params = {}) {
+  return apiClient.get('/backtest/sessions', { params })
+}
+
+/**
+ * Get a single backtest session result
+ * @param {number} sessionId
+ * @returns {Promise<Object>}
+ */
+export function getBacktestSession(sessionId) {
+  return apiClient.get(`/backtest/sessions/${sessionId}`)
+}
+
+/**
+ * Delete a backtest session
+ * @param {number} sessionId
+ * @returns {Promise<Object>}
+ */
+export function deleteBacktestSession(sessionId) {
+  return apiClient.delete(`/backtest/sessions/${sessionId}`)
+}
+
+/**
+ * Validate an indicator expression
+ * @param {string} expression
+ * @returns {Promise<Object>}
+ */
+export function validateExpression(expression) {
+  return apiClient.post('/backtest/validate-expression', { expression })
 }
 
 export default apiClient
