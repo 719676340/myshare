@@ -30,8 +30,8 @@
         <el-table-column prop="end_date" label="结束" width="100" />
         <el-table-column label="收益率" width="100">
           <template #default="{ row }">
-            <span :class="row.statistics?.total_return_pct > 0 ? 'text-red' : 'text-green'">
-              {{ row.statistics?.total_return_pct?.toFixed(2) }}%
+            <span :class="row.total_return_pct > 0 ? 'text-red' : 'text-green'">
+              {{ row.total_return_pct?.toFixed(2) }}%
             </span>
           </template>
         </el-table-column>

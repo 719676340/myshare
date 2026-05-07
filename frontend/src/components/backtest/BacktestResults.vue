@@ -137,11 +137,15 @@ export default {
 
     const equityCurveOption = computed(() => {
       const curve = backtestStore.currentResult?.equity_curve || []
+      const baseline = backtestStore.currentResult?.baseline_curve || []
       if (curve.length === 0) return {}
 
       const dates = curve.map(d => d.date)
       const strategyData = curve.map(d => d.net_worth)
-      const baselineData = curve.map(d => d.baseline_worth)
+      const baselineData = baseline.map(d => d.net_worth)
+
+      // If baseline has different length or is empty, fill with empty array
+      const baselineValues = baseline.length === curve.length ? baselineData : []
 
       return {
         backgroundColor: '#131722',
@@ -191,7 +195,7 @@ export default {
           {
             name: '买入持有',
             type: 'line',
-            data: baselineData,
+            data: baselineValues,
             lineStyle: { color: '#787b86', width: 1, type: 'dashed' },
             symbol: 'none'
           }
