@@ -746,6 +746,7 @@ class BacktestService:
             "profit_factor": round(profit_factor, 2) if profit_factor != float("inf") else "Inf",
             "sharpe_ratio": round(sharpe_ratio, 4),
             "avg_holding_days": round(avg_holding_days, 1),
+            "trade_pairs": buy_sell_pairs,
         }
 
     def _pair_trades(self, trades: list) -> list:
@@ -781,7 +782,12 @@ class BacktestService:
                         "sell_date": t["trade_date"],
                         "sell_price": t["price"],
                         "shares": t["shares"],
+                        "sell_shares": t["shares"],
                         "profit": round(profit, 2),
+                        "profit_amount": round(profit, 2),
+                        "profit_pct": round(
+                            profit / (pending_buy["amount"] + pending_buy["commission"]) * 100, 2
+                        ) if (pending_buy["amount"] + pending_buy["commission"]) > 0 else 0,
                         "holding_days": holding_days,
                     }
                 )
@@ -841,11 +847,14 @@ class BacktestService:
     async def get_session(self, session_id: int) -> dict:
         """Get full backtest session result.
 
+        Returns data in the same flat format as run_backtest:
+        {session_id, trades, equity_curve, baseline_curve, statistics}.
+
         Args:
             session_id: Backtest session ID.
 
         Returns:
-            Full session data with trades, curves, and statistics.
+            Full session data matching run_backtest response format.
 
         Raises:
             ValueError: If session not found.
@@ -865,39 +874,58 @@ class BacktestService:
         )
         trades = trades_result.scalars().all()
 
-        # Get stock name
-        stock_result = await self.db.execute(
-            select(Stock).where(Stock.ts_code == session.ts_code)
+        trades_list = [
+            {
+                "id": t.id,
+                "trade_type": t.trade_type,
+                "trade_date": t.trade_date,
+                "shares": t.shares,
+                "price": t.price,
+                "amount": t.amount,
+                "commission": t.commission,
+                "stamp_tax": t.stamp_tax,
+            }
+            for t in trades
+        ]
+
+        # Fetch OHLCV data to reconstruct curves
+        bars_result = await self.db.execute(
+            select(DailyBar)
+            .where(
+                DailyBar.ts_code == session.ts_code,
+                DailyBar.trade_date >= session.start_date,
+                DailyBar.trade_date <= session.end_date,
+            )
+            .order_by(DailyBar.trade_date.asc())
         )
-        stock = stock_result.scalar_one_or_none()
+        bars = bars_result.scalars().all()
+
+        # Reconstruct equity curve and baseline curve
+        if bars:
+            df = pd.DataFrame([
+                {"trade_date": b.trade_date, "close": b.close}
+                for b in bars
+            ])
+            equity_curve = self._build_equity_curve(df, trades_list, session.initial_capital)
+            baseline_curve = self._build_baseline_curve(df, session.initial_capital)
+        else:
+            equity_curve = []
+            baseline_curve = []
+
+        # Parse statistics (already stored as JSON)
+        statistics = json.loads(session.statistics) if session.statistics else {}
+
+        # Add trade_pairs if not present in stored statistics
+        if "trade_pairs" not in statistics:
+            buy_sell_pairs = self._pair_trades(trades_list)
+            statistics["trade_pairs"] = buy_sell_pairs
 
         return {
-            "session": {
-                "id": session.id,
-                "ts_code": session.ts_code,
-                "stock_name": session.stock_name or (stock.name if stock else ""),
-                "start_date": session.start_date,
-                "end_date": session.end_date,
-                "initial_capital": session.initial_capital,
-                "indicators_config": json.loads(session.indicators_config),
-                "buy_conditions": json.loads(session.buy_conditions),
-                "sell_conditions": json.loads(session.sell_conditions),
-                "statistics": json.loads(session.statistics) if session.statistics else {},
-                "created_at": session.created_at,
-            },
-            "trades": [
-                {
-                    "id": t.id,
-                    "trade_type": t.trade_type,
-                    "trade_date": t.trade_date,
-                    "shares": t.shares,
-                    "price": t.price,
-                    "amount": t.amount,
-                    "commission": t.commission,
-                    "stamp_tax": t.stamp_tax,
-                }
-                for t in trades
-            ],
+            "session_id": session.id,
+            "trades": trades_list,
+            "equity_curve": equity_curve,
+            "baseline_curve": baseline_curve,
+            "statistics": statistics,
         }
 
     async def delete_session(self, session_id: int) -> dict:
