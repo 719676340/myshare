@@ -82,6 +82,7 @@ from app.api.indicators import router as indicators_router  # noqa: E402
 from app.api.vpa import router as vpa_router  # noqa: E402
 from app.api.advanced import router as advanced_router  # noqa: E402
 from app.api.practice import router as practice_router  # noqa: E402
+from app.api.backtest import router as backtest_router  # noqa: E402
 
 app.include_router(stocks_router, prefix="/api")
 app.include_router(daily_router, prefix="/api")
@@ -89,3 +90,4 @@ app.include_router(indicators_router, prefix="/api")
 app.include_router(vpa_router, prefix="/api")
 app.include_router(advanced_router, prefix="/api")
 app.include_router(practice_router, prefix="/api")
+app.include_router(backtest_router, prefix="/api")
