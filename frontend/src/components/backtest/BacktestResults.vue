@@ -71,6 +71,7 @@
         <KLineChart
           :buySellMarkers="buySellMarkers"
           :fixedData="dailyData"
+          style="height: 450px"
         />
       </div>
 
