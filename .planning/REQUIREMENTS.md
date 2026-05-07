@@ -11,7 +11,7 @@
 - [x] **DATA-02**: 选择股票后自动从 tushare 拉取日 K 数据（OHLCV）存入 SQLite
 - [x] **DATA-03**: 技术指标计算结果存入数据库，避免重复计算
 - [x] **DATA-04**: 支持指标参数调节（如 MA 周期、RSI 周期等）
-- [ ] **DATA-05**: 支持基于基础字段的四则运算组合新指标
+- [x] **DATA-05**: 支持基于基础字段的四则运算组合新指标
 
 ### K-Line Charting
 
@@ -58,11 +58,11 @@
 
 ### Strategy Backtesting
 
-- [ ] **BACK-01**: 提供预设策略模板（MA 交叉、放量突破、MACD 背离等）
-- [ ] **BACK-02**: 用户可调节策略参数（阈值、回看天数、MA 周期等）
-- [ ] **BACK-03**: 回测输出：总收益率、年化收益率、最大回撤、交易次数、胜率、盈亏比、夏普比率、平均持仓天数
-- [ ] **BACK-04**: 资金曲线图：策略净值 vs 基准净值（买入持有）
-- [ ] **BACK-05**: 每笔交易买卖点标记在 K 线图上
+- [x] **BACK-01**: 提供预设策略模板（MA 交叉、放量突破、MACD 背离等）
+- [x] **BACK-02**: 用户可调节策略参数（阈值、回看天数、MA 周期等）
+- [x] **BACK-03**: 回测输出：总收益率、年化收益率、最大回撤、交易次数、胜率、盈亏比、夏普比率、平均持仓天数
+- [x] **BACK-04**: 资金曲线图：策略净值 vs 基准净值（买入持有）
+- [x] **BACK-05**: 每笔交易买卖点标记在 K 线图上
 
 ## v2 Requirements
 
@@ -125,11 +125,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRACT-06 | Phase 4 | Complete |
 | PRACT-07 | Phase 4 | Complete |
 | PRACT-08 | Phase 4 | Complete |
-| BACK-01 | Phase 5 | Pending |
-| BACK-02 | Phase 5 | Pending |
-| BACK-03 | Phase 5 | Pending |
-| BACK-04 | Phase 5 | Pending |
-| BACK-05 | Phase 5 | Pending |
+| BACK-01 | Phase 5 | Complete |
+| BACK-02 | Phase 5 | Complete |
+| BACK-03 | Phase 5 | Complete |
+| BACK-04 | Phase 5 | Complete |
+| BACK-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 35 total

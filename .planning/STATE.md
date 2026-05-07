@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-05-07T02:39:52.954Z"
-last_activity: 2026-05-06
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-05-07T03:45:09.347Z"
+last_activity: 2026-05-07
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value:** 在真实 A 股数据上可视化量价分析理论 — 让用户通过看图、模拟练习、策略回测来学习交易
-**Current focus:** Phase 04 — trading-practice-module
+**Current focus:** Phase 05 — strategy-backtesting-module
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (strategy-backtesting-module) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-05-06
+Last activity: 2026-05-07
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P02 | 10min | 3 tasks | 5 files |
 | Phase 04 P01 | 5min | 3 tasks | 5 files |
 | Phase 04 P03 | 3min | 3 tasks | 3 files |
+| Phase 05 P01 | 7min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Equity curve built by replaying trades chronologically against daily close prices
 - [Phase 04]: KLineChart uses optional props (fixedData, buySellMarkers) with null defaults for backward compatibility with StrategyView
 - [Phase 04]: PracticeView uses v-if/v-else-if/v-else for three phases driven by practiceStore getters (isConfigured, isFinished)
+- [Phase 05]: Expression parser uses Python ast module with whitelist (SAFE_FIELDS/SAFE_FUNCTIONS/SAFE_NODE_TYPES) for safe user formula evaluation
+- [Phase 05]: Topological sort (Kahn's algorithm) resolves cross-indicator dependencies; circular deps rejected with clear error
+- [Phase 05]: Full position model for backtest: buy only when no position held, sell all shares at once (simplified from practice FIFO)
 
 ### Pending Todos
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-07T02:39:52.951Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-strategy-backtesting-module/05-CONTEXT.md
+Last session: 2026-05-07T03:45:09.345Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
