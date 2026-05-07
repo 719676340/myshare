@@ -101,7 +101,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — Backend: AST expression parser, backtest engine with daily iteration + A-share rules + condition evaluation, BacktestSession/Trade models, 6 REST API endpoints, preset strategy templates
-- [ ] 05-02-PLAN.md — Frontend: Backtest store, preset selector, indicator builder with validation, recursive condition group components, results display (8 metrics + dual-line equity curve + K-line markers + trade table), BacktestView page assembly, human verification
+- [x] 05-02-PLAN.md — Frontend: Backtest store, preset selector, indicator builder with validation, recursive condition group components, results display (8 metrics + dual-line equity curve + K-line markers + trade table), BacktestView page assembly, human verification
 
 ## Progress
 
