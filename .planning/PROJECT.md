@@ -31,12 +31,14 @@
 - [x] 交易练习模块 — 买入/卖出 + 仓位比例选择 — Validated in Phase 04
 - [x] 交易练习模块 — 模拟交易费用（佣金万 2.5 + 印花税千 1） — Validated in Phase 04
 - [x] 交易练习模块 — 最终收益统计 — Validated in Phase 04
+- [x] 自动回测模块 — 预设策略模板 + 参数调节 — Validated in Phase 05
+- [x] 自动回测模块 — 回测指标输出（总收益率、年化收益率、最大回撤、胜率等） — Validated in Phase 05
+- [x] 自动回测模块 — 资金曲线图 + 买卖点标记 — Validated in Phase 05
+- [x] 数据管理 — 支持预定义指标 + 参数调节 + 四则运算组合新指标 — Validated in Phase 05
 
 ### Active
-- [ ] 自动回测模块 — 预设策略模板 + 参数调节
-- [ ] 自动回测模块 — 回测指标输出（总收益率、年化收益率、最大回撤、胜率等）
-- [ ] 自动回测模块 — 资金曲线图 + 买卖点标记
-- [ ] 数据管理 — 支持预定义指标 + 参数调节 + 四则运算组合新指标
+
+(No active requirements — all phases complete)
 
 ### Out of Scope
 
@@ -92,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-06 after Phase 04 completion*
+*Last updated: 2026-05-07 after Phase 05 completion — all phases done*
