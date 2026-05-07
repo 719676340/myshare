@@ -32,7 +32,8 @@ import { useStockStore } from '@/stores/stock'
 
 export default {
   name: 'StockSearch',
-  setup() {
+  emits: ['select'],
+  setup(props, { emit }) {
     const stockStore = useStockStore()
     const searchText = ref('')
 
@@ -63,6 +64,7 @@ export default {
 
     function handleSelect(item) {
       stockStore.selectStock(item.ts_code, item.name)
+      emit('select', { ts_code: item.ts_code, name: item.name })
       searchText.value = ''
     }
 
