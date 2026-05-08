@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Tushare API token (required)
-    tushare_token: str = ""
+    tushare_token: str = "433aa0a2f7905b83d70b30ec0a1ba8d08476c5e6419346964990d783"
 
     # Database URL (SQLite with async driver)
     database_url: str = "sqlite+aiosqlite:///./data/stock.db"

@@ -56,6 +56,11 @@ const MA_COLORS = {
   ma60: '#26a69a'  // green
 }
 
+const VMA_COLORS = {
+  vma5: '#ffeb3b',  // yellow
+  vma10: '#ffffff'  // white
+}
+
 const UP_COLOR = '#ef5350'    // A-share red for up
 const DOWN_COLOR = '#26a69a'  // A-share green for down
 const BG_COLOR = '#131722'
@@ -158,32 +163,61 @@ export default {
       // Multi-timeframe support
       const isMultiTimeframe = chartStore.timeframe !== 'daily'
       // Practice mode: props.fixedData overrides store data
-      const ohlcData = props.fixedData || stockStore.dailyData
-      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : ohlcData
+      const baseData = props.fixedData || stockStore.dailyData
+      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : baseData
       if (!rawData || rawData.length === 0) {
         return {}
       }
 
       // Extract chart data arrays
       const dates = rawData.map((d) => d.trade_date)
-      const ohlc = rawData.map((d) => [d.open, d.close, d.low, d.high])
-      const volumes = rawData.map((d) => d.vol)
       const closes = rawData.map((d) => d.close)
+      const volumes = rawData.map((d) => d.vol)
 
-      // Volume data with per-bar color based on up/down
-      const volumeData = rawData.map((d) => ({
-        value: d.vol,
-        itemStyle: {
-          color: d.close >= d.open ? UP_COLOR : DOWN_COLOR,
-          opacity: 0.7
-        }
-      }))
+      // Build pre_close lookup for correct daily change calculation
+      const preCloseMap = new Map(
+        rawData.map((d) => [d.trade_date, d.pre_close != null ? d.pre_close : null])
+      )
+
+      // Single-series approach: use per-data-point object format for A-share coloring.
+      // Each data item is { value: [open, close, low, high], itemStyle: { ... } }.
+      // This is the officially supported ECharts 6 pattern for per-candle styling.
+      // Dual-series approach was abandoned: ECharts 6's candlestick type does not
+      // reliably render when one of two overlapping series has null/empty data points,
+      // causing the entire chart to disappear.
+      const ohlcData = []
+      const volumeData = []
+      rawData.forEach((d) => {
+        const preClose = d.pre_close != null ? d.pre_close : d.open
+        const isUp = d.close >= preClose
+        const color = isUp ? UP_COLOR : DOWN_COLOR
+        ohlcData.push({
+          value: [d.open, d.close, d.low, d.high],
+          itemStyle: {
+            color: color,
+            color0: color,
+            borderColor: color,
+            borderColor0: color
+          }
+        })
+        volumeData.push({
+          value: d.vol,
+          itemStyle: {
+            color: color,
+            opacity: 0.7
+          }
+        })
+      })
 
       // Calculate MAs
       const ma5Data = calculateMA(closes, 5)
       const ma10Data = calculateMA(closes, 10)
       const ma20Data = calculateMA(closes, 20)
       const ma60Data = calculateMA(closes, 60)
+
+      // Calculate VMAs (volume moving averages)
+      const vma5Data = calculateMA(volumes, 5)
+      const vma10Data = calculateMA(volumes, 10)
 
       // Default show last 120 bars
       const totalBars = rawData.length
@@ -229,7 +263,7 @@ export default {
       const xAxes = []
       const yAxes = []
       const series = []
-      const legendData = ['MA5', 'MA10', 'MA20', 'MA60']
+      const legendData = ['MA5', 'MA10', 'MA20', 'MA60', 'VMA5', 'VMA10']
 
       // Track xAxisIndex for each grid
       let currentTop = scaledGap
@@ -315,23 +349,18 @@ export default {
         z: 5
       }))
 
-      // Candlestick series with optional S/R markLine
+      // Single candlestick series with per-data-point object format for A-share coloring.
+      // Each data item carries its own itemStyle — this is the officially supported
+      // ECharts 6 pattern. No dual-series workaround needed.
       const candlestickSeries = {
         name: 'K线',
         type: 'candlestick',
         xAxisIndex: 0,
         yAxisIndex: 0,
-        data: ohlc,
-        itemStyle: {
-          color: UP_COLOR,
-          color0: DOWN_COLOR,
-          borderColor: UP_COLOR,
-          borderColor0: DOWN_COLOR
-        }
+        data: ohlcData
       }
 
       // Add support/resistance markLine to candlestick series
-      // Show only top N levels by strength to avoid clutter
       if (chartStore.showSR && stockStore.advancedData.levels.length > 0) {
         const sortedLevels = [...stockStore.advancedData.levels]
           .sort((a, b) => b.strength - a.strength)
@@ -370,7 +399,7 @@ export default {
 
       series.push(candlestickSeries)
 
-      // Volume series
+      // Single volume bar series with per-data-point coloring
       series.push({
         name: '成交量',
         type: 'bar',
@@ -378,6 +407,36 @@ export default {
         yAxisIndex: 1,
         data: volumeData,
         barMaxWidth: 8
+      })
+
+      // VMA lines on volume sub-chart
+      series.push({
+        name: 'VMA5',
+        type: 'line',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: vma5Data,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: {
+          color: VMA_COLORS.vma5,
+          width: 1
+        },
+        z: 5
+      })
+      series.push({
+        name: 'VMA10',
+        type: 'line',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: vma10Data,
+        smooth: false,
+        showSymbol: false,
+        lineStyle: {
+          color: VMA_COLORS.vma10,
+          width: 1
+        },
+        z: 5
       })
 
       // MA lines
@@ -959,16 +1018,16 @@ export default {
         currentTop += scaledCycle + scaledGap
       }
 
-      // Buy/Sell markers for backtest/trade results
+      // Buy/Sell markers for backtest/trade results - B/S text labels
       if (props.buySellMarkers && props.buySellMarkers.length > 0) {
-        // Offset so triangle tip points to the candle without overlapping
         const buyMarkers = props.buySellMarkers
           .filter(m => m.type === 'buy')
           .map(m => {
             const idx = rawData.findIndex(d => d.trade_date === m.date)
             if (idx < 0) return null
             const low = rawData[idx].low
-            const offset = (rawData[idx].high - low) * 0.3 || low * 0.01
+            const high = rawData[idx].high
+            const offset = (high - low) * 0.4 || low * 0.015
             return [idx, low - offset]
           })
           .filter(Boolean)
@@ -979,7 +1038,8 @@ export default {
             const idx = rawData.findIndex(d => d.trade_date === m.date)
             if (idx < 0) return null
             const high = rawData[idx].high
-            const offset = (high - rawData[idx].low) * 0.3 || high * 0.01
+            const low = rawData[idx].low
+            const offset = (high - low) * 0.4 || high * 0.015
             return [idx, high + offset]
           })
           .filter(Boolean)
@@ -989,13 +1049,20 @@ export default {
             type: 'scatter',
             name: '买入',
             data: buyMarkers,
-            symbol: 'triangle',
-            symbolSize: 14,
-            symbolRotate: 0,
-            itemStyle: { color: '#ef5350' },
+            symbol: 'circle',
+            symbolSize: 1,
             zlevel: 10,
             xAxisIndex: 0,
-            yAxisIndex: 0
+            yAxisIndex: 0,
+            label: {
+              show: true,
+              position: 'bottom',
+              formatter: 'B',
+              fontSize: 13,
+              fontWeight: 'bold',
+              color: '#ef5350',
+              distance: 0
+            }
           })
         }
 
@@ -1004,13 +1071,20 @@ export default {
             type: 'scatter',
             name: '卖出',
             data: sellMarkers,
-            symbol: 'triangle',
-            symbolSize: 14,
-            symbolRotate: 180,
-            itemStyle: { color: '#26a69a' },
+            symbol: 'circle',
+            symbolSize: 1,
             zlevel: 10,
             xAxisIndex: 0,
-            yAxisIndex: 0
+            yAxisIndex: 0,
+            label: {
+              show: true,
+              position: 'top',
+              formatter: 'S',
+              fontSize: 13,
+              fontWeight: 'bold',
+              color: '#26a69a',
+              distance: 0
+            }
           })
         }
       }
@@ -1091,22 +1165,47 @@ export default {
           },
           formatter: function (params) {
             if (!params || params.length === 0) return ''
-            // Find the candlestick data
+            // Find the candlestick param (single series now)
             const candleParam = params.find((p) => p.seriesType === 'candlestick')
-            const volumeParam = params.find((p) => p.seriesName === '成交量')
             if (!candleParam) return ''
 
+            // ECharts 6 prepends dataIndex to candlestick value: [dataIndex, open, close, low, high]
+            // Use data.value from the object format as the canonical source.
+            const rawValues = candleParam.data?.value || candleParam.value
+            const offset = (rawValues && rawValues.length === 5 && rawValues[0] === candleParam.dataIndex) ? 1 : 0
             const date = candleParam.axisValue
-            const d = candleParam.data
-            // d is [open, close, low, high]
-            const open = d[0]
-            const close = d[1]
-            const low = d[2]
-            const high = d[3]
-            const change = close - open
-            const changePct = ((change / open) * 100).toFixed(2)
-            const isUp = close >= open
-            const vol = volumeParam ? volumeParam.data : '-'
+            const open = rawValues[offset]
+            const close = rawValues[offset + 1]
+            const low = rawValues[offset + 2]
+            const high = rawValues[offset + 3]
+            // Daily change relative to previous close (standard A-stock convention)
+            const preClose = preCloseMap.get(date)
+            const change = preClose != null ? close - preClose : close - open
+            const changePct = preClose != null
+              ? ((change / preClose) * 100).toFixed(2)
+              : (((close - open) / open) * 100).toFixed(2)
+            const isUp = change >= 0
+
+            // Volume from single bar series
+            const volParam = params.find((p) => p.seriesName === '成交量')
+            // Use params.value for volume too (safe cross-format approach like OHLC above)
+            let vol = '-'
+            if (volParam) {
+              if (volParam.value != null) {
+                vol = volParam.value
+              } else if (volParam.data?.value != null) {
+                vol = volParam.data.value
+              } else if (volParam.data != null) {
+                vol = volParam.data
+              }
+            }
+
+            // VMA values
+            const vmaParams = params.filter((p) => p.seriesName === 'VMA5' || p.seriesName === 'VMA10')
+            const vmaLines = vmaParams.map((p) => {
+              const val = p.data !== null && p.data !== undefined ? p.data : '-'
+              return `<span style="color:${p.color}">${p.seriesName}: ${val}</span>`
+            }).join('<br/>')
 
             // MA values
             const maParams = params.filter((p) => p.seriesType === 'line' && p.seriesName.startsWith('MA'))
@@ -1124,6 +1223,8 @@ export default {
               !p.seriesName.startsWith('MA') &&
               p.seriesName !== 'K线' &&
               p.seriesName !== '成交量' &&
+              p.seriesName !== 'VMA5' &&
+              p.seriesName !== 'VMA10' &&
               p.seriesType === 'line'
             )
             if (indicatorParams.length > 0) {
@@ -1172,7 +1273,8 @@ export default {
               <div>开盘: ${open}  收盘: <span style="color:${changeColor}">${close}</span></div>
               <div>最高: ${high}  最低: ${low}</div>
               <div>涨跌: <span style="color:${changeColor}">${arrow} ${change.toFixed(2)} (${changePct}%)</span></div>
-              <div>成交量: ${typeof vol === 'object' ? vol.value : vol}</div>
+              <div>成交量: ${vol}</div>
+              ${vmaLines ? '<div>' + vmaLines + '</div>' : ''}
               <div style="margin-top:4px;border-top:1px solid ${BORDER_COLOR};padding-top:4px">${maLines}</div>
               ${indicatorLines.join('')}
               ${vpaInfo}
@@ -1184,12 +1286,36 @@ export default {
       }
     })
 
+    /**
+     * Zoom the chart to show the last N bars (trading days).
+     * Called by parent component via template ref.
+     * @param {number} barsToShow - Number of bars to display, or Infinity for all
+     */
+    function zoomToRange(barsToShow) {
+      const chart = chartRef.value?.chart
+      if (!chart) return
+      const ohlcData = props.fixedData || stockStore.dailyData
+      const isMultiTimeframe = chartStore.timeframe !== 'daily'
+      const rawData = isMultiTimeframe ? (stockStore.timeframeData || []) : ohlcData
+      if (!rawData || rawData.length === 0) return
+
+      const totalBars = rawData.length
+      if (barsToShow >= totalBars) {
+        // Show all data
+        chart.dispatchAction({ type: 'dataZoom', start: 0, end: 100 })
+      } else {
+        const startPercent = ((totalBars - barsToShow) / totalBars) * 100
+        chart.dispatchAction({ type: 'dataZoom', start: startPercent, end: 100 })
+      }
+    }
+
     return {
       chartContainer,
       chartRef,
       chartOption,
       stockStore,
-      handleDataZoom
+      handleDataZoom,
+      zoomToRange
     }
   }
 }

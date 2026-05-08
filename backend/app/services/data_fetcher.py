@@ -188,6 +188,8 @@ class DataFetcher:
                     "high": bar.high,
                     "low": bar.low,
                     "close": bar.close,
+                    "pre_close": bar.pre_close,
+                    "change_pct": bar.change_pct,
                     "vol": bar.vol,
                     "amount": bar.amount,
                 }

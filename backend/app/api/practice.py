@@ -30,7 +30,6 @@ class OrderRequest(BaseModel):
     """Request body for placing a buy order."""
 
     shares: int
-    price: float
 
 
 class SellOrderRequest(BaseModel):
@@ -38,7 +37,6 @@ class SellOrderRequest(BaseModel):
 
     position_id: int
     shares: int
-    price: float
 
 
 # --- Endpoints ---
@@ -168,7 +166,6 @@ async def buy_order(
         return await service.buy_order(
             session_id=session_id,
             shares=body.shares,
-            price=body.price,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -205,7 +202,6 @@ async def sell_order(
             session_id=session_id,
             position_id=body.position_id,
             shares=body.shares,
-            price=body.price,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -272,3 +268,61 @@ async def get_stats(
     except Exception as e:
         logger.error(f"Failed to get stats for session {session_id}: {e}")
         raise HTTPException(status_code=500, detail="获取统计信息失败")
+
+
+class UpdateNotesRequest(BaseModel):
+    """Request body for updating session notes."""
+
+    notes: str
+
+
+@router.get("/practice/sessions")
+async def list_sessions(
+    status: str = None,
+    ts_code: str = None,
+    limit: int = 50,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+):
+    """List practice sessions with optional filtering."""
+    try:
+        service = PracticeService(db)
+        return await service.list_sessions(
+            status=status, ts_code=ts_code, limit=limit, offset=offset
+        )
+    except Exception as e:
+        logger.error(f"Failed to list sessions: {e}")
+        raise HTTPException(status_code=500, detail="获取练习记录失败")
+
+
+@router.delete("/practice/sessions/{session_id}")
+async def delete_session(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a practice session and all associated data."""
+    try:
+        service = PracticeService(db)
+        return await service.delete_session(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to delete session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail="删除记录失败")
+
+
+@router.patch("/practice/sessions/{session_id}/notes")
+async def update_notes(
+    session_id: int,
+    body: UpdateNotesRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update notes for a practice session."""
+    try:
+        service = PracticeService(db)
+        return await service.update_session_notes(session_id, body.notes)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update notes for session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail="更新备注失败")

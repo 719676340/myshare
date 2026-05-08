@@ -20,6 +20,10 @@
           <span class="info-label">浮动盈亏</span>
           <span class="info-value" :class="pnlClass">{{ formatPnl(practiceStore.totalPnl) }}</span>
         </div>
+        <div class="info-item">
+          <span class="info-label">盈亏比例</span>
+          <span class="info-value" :class="pnlClass">{{ formatPct(practiceStore.totalPnlPct) }}</span>
+        </div>
       </div>
 
       <!-- Progress -->
@@ -70,6 +74,10 @@
             </div>
             <div class="trade-inputs">
               <div class="input-row">
+                <label>收盘价</label>
+                <span class="price-display">{{ getCurrentPrice().toFixed(2) }}</span>
+              </div>
+              <div class="input-row">
                 <label>股数</label>
                 <el-input-number
                   v-model="buyShares"
@@ -77,16 +85,6 @@
                   :step="100"
                   :max="99999900"
                   :disabled="buyPreset !== 'custom'"
-                  style="width: 100%"
-                />
-              </div>
-              <div class="input-row">
-                <label>价格</label>
-                <el-input-number
-                  v-model="buyPrice"
-                  :min="0.01"
-                  :step="0.01"
-                  :precision="2"
                   style="width: 100%"
                 />
               </div>
@@ -131,11 +129,15 @@
                   <span>现价 {{ getCurrentPrice().toFixed(2) }}</span>
                 </div>
                 <div class="pos-pnl" :class="getPositionPnlClass(pos)">
-                  {{ formatPnl(pos.floating_pnl) }}（{{ formatPct(pos.floating_pnl / (pos.buy_price * pos.total_shares) * 100) }}）
+                  {{ formatPnl(pos.floating_pnl) }}（{{ formatPct(pos.floating_pnl_pct) }}）
                 </div>
               </div>
             </div>
             <div v-if="selectedPosition" class="trade-inputs" style="margin-top: 12px">
+              <div class="input-row">
+                <label>收盘价</label>
+                <span class="price-display">{{ getCurrentPrice().toFixed(2) }}</span>
+              </div>
               <div class="input-row">
                 <label>卖出股数</label>
                 <el-input-number
@@ -143,16 +145,6 @@
                   :min="100"
                   :step="100"
                   :max="selectedPosition.remaining_shares"
-                  style="width: 100%"
-                />
-              </div>
-              <div class="input-row">
-                <label>价格</label>
-                <el-input-number
-                  v-model="sellPrice"
-                  :min="0.01"
-                  :step="0.01"
-                  :precision="2"
                   style="width: 100%"
                 />
               </div>
@@ -201,14 +193,22 @@
 
     <!-- End Practice Button -->
     <div v-if="practiceStore.isConfigured && !practiceStore.isFinished" class="end-section">
-      <el-button
-        type="warning"
-        size="small"
-        @click="handleEndPractice"
-        style="width: 100%"
-      >
-        结束练习
-      </el-button>
+      <div class="end-buttons">
+        <el-button
+          type="primary"
+          size="small"
+          @click="handleNewPractice"
+        >
+          新建练习
+        </el-button>
+        <el-button
+          type="warning"
+          size="small"
+          @click="handleEndPractice"
+        >
+          结束练习
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -226,12 +226,10 @@ export default {
     const activeTab = ref('buy')
     const buyPreset = ref('half')
     const buyShares = ref(0)
-    const buyPrice = ref(0)
     const sellShares = ref(100)
-    const sellPrice = ref(0)
     const selectedPosition = ref(null)
 
-    // Get current price from last visible bar
+    // Get current price from last visible bar (close price)
     function getCurrentPrice() {
       const data = practiceStore.dailyData
       if (data.length === 0) return 0
@@ -292,19 +290,21 @@ export default {
       buyShares.value = Math.floor(availableCash * fraction / currentPrice / 100) * 100
     }
 
-    // Buy preview computation
+    // Buy preview computation (uses current close price)
     const buyPreview = computed(() => {
-      if (!buyShares.value || !buyPrice.value) return null
-      const amount = buyShares.value * buyPrice.value
+      const price = getCurrentPrice()
+      if (!buyShares.value || !price) return null
+      const amount = buyShares.value * price
       const commission = Math.round(amount * 0.00025 * 100) / 100
       const total = amount + commission
       return { amount, commission, total }
     })
 
-    // Sell preview computation
+    // Sell preview computation (uses current close price)
     const sellPreview = computed(() => {
-      if (!sellShares.value || !sellPrice.value) return null
-      const amount = sellShares.value * sellPrice.value
+      const price = getCurrentPrice()
+      if (!sellShares.value || !price) return null
+      const amount = sellShares.value * price
       const commission = Math.round(amount * 0.00025 * 100) / 100
       const stampTax = Math.round(amount * 0.001 * 100) / 100
       const net = amount - commission - stampTax
@@ -313,12 +313,12 @@ export default {
 
     // Buy validation
     const canBuy = computed(() => {
-      return buyShares.value > 0 && buyPrice.value > 0
+      return buyShares.value > 0 && getCurrentPrice() > 0
     })
 
     // Sell validation
     const canSell = computed(() => {
-      return selectedPosition.value && sellShares.value > 0 && sellPrice.value > 0
+      return selectedPosition.value && sellShares.value > 0 && getCurrentPrice() > 0
     })
 
     // Position P&L class
@@ -332,18 +332,13 @@ export default {
     function selectPosition(pos) {
       selectedPosition.value = pos
       sellShares.value = pos.remaining_shares
-      sellPrice.value = getCurrentPrice()
     }
 
     // Handle advance day
     async function handleAdvance() {
       try {
-        const result = await practiceStore.advanceDay()
-        // Update buy/sell price to latest close
-        const newPrice = getCurrentPrice()
-        buyPrice.value = newPrice
-        sellPrice.value = newPrice
-        // Recalculate preset shares
+        await practiceStore.advanceDay()
+        // Recalculate preset shares with new close price
         if (buyPreset.value !== 'custom') {
           onBuyPresetChange(buyPreset.value)
         }
@@ -355,7 +350,7 @@ export default {
     // Handle buy
     async function handleBuy() {
       try {
-        const result = await practiceStore.buyOrder(buyShares.value, buyPrice.value)
+        const result = await practiceStore.buyOrder(buyShares.value)
         ElMessage.success(result.message || '买入成功')
         // Recalculate preset after cash change
         if (buyPreset.value !== 'custom') {
@@ -372,14 +367,19 @@ export default {
       try {
         const result = await practiceStore.sellOrder(
           selectedPosition.value.id,
-          sellShares.value,
-          sellPrice.value
+          sellShares.value
         )
         ElMessage.success(result.message || '卖出成功')
         selectedPosition.value = null
       } catch (err) {
         ElMessage.error(err.message || '卖出失败')
       }
+    }
+
+    // Handle new practice (keep session in activeSessions, just clear display state)
+    function handleNewPractice() {
+      practiceStore.session = null
+      practiceStore.stats = null
     }
 
     // Handle end practice
@@ -416,13 +416,8 @@ export default {
 
     onMounted(() => {
       window.addEventListener('keydown', handleKeydown)
-      // Initialize buy price from current data
-      const price = getCurrentPrice()
-      if (price) {
-        buyPrice.value = price
-        sellPrice.value = price
-        onBuyPresetChange(buyPreset.value)
-      }
+      // Initialize shares from preset
+      onBuyPresetChange(buyPreset.value)
     })
 
     onUnmounted(() => {
@@ -434,9 +429,7 @@ export default {
       activeTab,
       buyPreset,
       buyShares,
-      buyPrice,
       sellShares,
-      sellPrice,
       selectedPosition,
       pnlClass,
       buyPreview,
@@ -453,6 +446,7 @@ export default {
       handleAdvance,
       handleBuy,
       handleSell,
+      handleNewPractice,
       handleEndPractice
     }
   }
@@ -576,6 +570,13 @@ export default {
         font-size: 12px;
         min-width: 60px;
         flex-shrink: 0;
+      }
+
+      .price-display {
+        color: $text-primary;
+        font-family: 'SF Mono', 'Menlo', monospace;
+        font-size: 14px;
+        font-weight: 600;
       }
     }
   }
@@ -720,6 +721,15 @@ export default {
 // End Practice
 .end-section {
   padding: 8px 16px 12px;
+
+  .end-buttons {
+    display: flex;
+    gap: 8px;
+
+    .el-button {
+      flex: 1;
+    }
+  }
 }
 
 // Tabs styling
