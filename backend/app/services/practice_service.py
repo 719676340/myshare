@@ -660,6 +660,57 @@ class PracticeService:
         # Build equity curve
         equity_curve = await self._build_equity_curve(session, all_trades)
 
+        # --- Max drawdown from equity curve ---
+        max_drawdown_pct = 0.0
+        max_drawdown_amount = 0.0
+        max_drawdown_start = ""
+        max_drawdown_end = ""
+        if equity_curve:
+            peak = equity_curve[0]["net_worth"]
+            peak_idx = 0
+            for i, pt in enumerate(equity_curve):
+                if pt["net_worth"] > peak:
+                    peak = pt["net_worth"]
+                    peak_idx = i
+                dd = peak - pt["net_worth"]
+                dd_pct = dd / peak * 100 if peak > 0 else 0
+                if dd > max_drawdown_amount:
+                    max_drawdown_amount = round(dd, 2)
+                    max_drawdown_pct = round(-dd_pct, 2)
+                    max_drawdown_start = equity_curve[peak_idx]["date"]
+                    max_drawdown_end = pt["date"]
+
+        # --- Win/loss distribution ---
+        wins = [p["profit_amount"] for p in trade_pairs if p["profit_amount"] > 0]
+        losses = [p["profit_amount"] for p in trade_pairs if p["profit_amount"] < 0]
+        avg_win_amount = round(sum(wins) / len(wins), 2) if wins else 0
+        avg_loss_amount = round(sum(losses) / len(losses), 2) if losses else 0
+        max_win_amount = round(max(wins), 2) if wins else 0
+        max_loss_amount = round(min(losses), 2) if losses else 0
+
+        # --- Profit factor ---
+        gross_profit = round(sum(wins), 2) if wins else 0
+        gross_loss = round(abs(sum(losses)), 2) if losses else 0
+        if gross_loss > 0:
+            profit_factor = round(gross_profit / gross_loss, 2)
+        elif total_trades > 0:
+            profit_factor = float("inf")
+        else:
+            profit_factor = 0
+
+        # --- Average holding period ---
+        avg_holding_days = (
+            round(sum(p["holding_days"] for p in trade_pairs) / total_trades, 1)
+            if total_trades > 0
+            else 0
+        )
+
+        # --- Per-trade cumulative P&L ---
+        cumulative_pnl = 0.0
+        for pair in trade_pairs:
+            cumulative_pnl += pair["profit_amount"]
+            pair["cumulative_pnl"] = round(cumulative_pnl, 2)
+
         return {
             "ts_code": session.ts_code,
             "start_date": session.start_date,
@@ -690,6 +741,19 @@ class PracticeService:
                 }
                 for t in all_trades
             ],
+            # New metrics
+            "max_drawdown_pct": max_drawdown_pct,
+            "max_drawdown_amount": max_drawdown_amount,
+            "max_drawdown_start": max_drawdown_start,
+            "max_drawdown_end": max_drawdown_end,
+            "avg_win_amount": avg_win_amount,
+            "avg_loss_amount": avg_loss_amount,
+            "max_win_amount": max_win_amount,
+            "max_loss_amount": max_loss_amount,
+            "gross_profit": gross_profit,
+            "gross_loss": gross_loss,
+            "profit_factor": profit_factor,
+            "avg_holding_days": avg_holding_days,
         }
 
     # --- Private helper methods ---
