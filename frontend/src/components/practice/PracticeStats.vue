@@ -8,27 +8,59 @@
       </div>
     </div>
 
-    <!-- Metrics Cards -->
-    <div class="metrics-row">
-      <div class="metric-card">
+    <!-- Tier 1: Primary metrics (large cards) -->
+    <div class="metrics-row tier-1">
+      <div class="metric-card primary">
         <div class="metric-value" :class="returnClass">{{ formatPct(practiceStore.stats?.total_return_pct) }}</div>
         <div class="metric-label">总收益率</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-value">{{ formatMoney(practiceStore.stats?.final_capital) }}</div>
-        <div class="metric-label">最终资金</div>
+      <div class="metric-card primary">
+        <div class="metric-value" :class="drawdownClass">{{ formatPct(practiceStore.stats?.max_drawdown_pct) }}</div>
+        <div class="metric-label">最大回撤</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-value">{{ practiceStore.stats?.total_trades || 0 }}</div>
-        <div class="metric-label">交易次数</div>
-      </div>
-      <div class="metric-card">
+      <div class="metric-card primary">
         <div class="metric-value">{{ formatPct(practiceStore.stats?.win_rate) }}</div>
         <div class="metric-label">胜率</div>
       </div>
-      <div class="metric-card">
+      <div class="metric-card primary">
+        <div class="metric-value">{{ formatProfitFactor(practiceStore.stats?.profit_factor) }}</div>
+        <div class="metric-label">盈亏比</div>
+      </div>
+    </div>
+
+    <!-- Tier 2: Secondary metrics (smaller cards) -->
+    <div class="metrics-row tier-2">
+      <div class="metric-card secondary">
+        <div class="metric-value">{{ formatMoney(practiceStore.stats?.final_capital) }}</div>
+        <div class="metric-label">最终资金</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value">{{ practiceStore.stats?.total_trades || 0 }}</div>
+        <div class="metric-label">交易次数</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value">{{ practiceStore.stats?.avg_holding_days || 0 }}天</div>
+        <div class="metric-label">平均持仓</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value text-red">{{ formatMoney(practiceStore.stats?.avg_win_amount) }}</div>
+        <div class="metric-label">平均盈利</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value text-green">{{ formatMoney(practiceStore.stats?.avg_loss_amount) }}</div>
+        <div class="metric-label">平均亏损</div>
+      </div>
+      <div class="metric-card secondary">
         <div class="metric-value">{{ formatMoney((practiceStore.stats?.total_commission || 0) + (practiceStore.stats?.total_stamp_tax || 0)) }}</div>
         <div class="metric-label">总费用</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value text-red">{{ formatMoney(practiceStore.stats?.max_win_amount) }}</div>
+        <div class="metric-label">最大单笔盈利</div>
+      </div>
+      <div class="metric-card secondary">
+        <div class="metric-value text-green">{{ formatMoney(practiceStore.stats?.max_loss_amount) }}</div>
+        <div class="metric-label">最大单笔亏损</div>
       </div>
     </div>
 
@@ -36,6 +68,9 @@
     <div class="chart-section">
       <h3>资金曲线</h3>
       <v-chart :option="equityCurveOption" autoresize style="height: 300px" />
+      <div v-if="practiceStore.stats?.trade_pairs?.length" class="drawdown-info">
+        最大回撤: {{ practiceStore.stats?.max_drawdown_pct }}% （{{ practiceStore.stats?.max_drawdown_start }} ~ {{ practiceStore.stats?.max_drawdown_end }}）
+      </div>
     </div>
 
     <!-- K-line with Buy/Sell Markers -->
@@ -68,10 +103,17 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="盈亏%">
+        <el-table-column label="盈亏%" width="80">
           <template #default="{ row }">
             <span :class="row.profit_pct > 0 ? 'text-red' : 'text-green'">
               {{ row.profit_pct?.toFixed(2) }}%
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="累计盈亏" width="110">
+          <template #default="{ row }">
+            <span :class="row.cumulative_pnl > 0 ? 'text-red' : row.cumulative_pnl < 0 ? 'text-green' : ''">
+              {{ formatMoney(row.cumulative_pnl) }}
             </span>
           </template>
         </el-table-column>
@@ -94,12 +136,12 @@ import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { LineChart } from 'echarts/charts'
-import { GridComponent } from 'echarts/components'
+import { GridComponent, MarkLineComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import KLineChart from '@/components/KLineChart.vue'
 import { usePracticeStore } from '@/stores/practice'
 
-use([LineChart, GridComponent, CanvasRenderer])
+use([LineChart, GridComponent, MarkLineComponent, CanvasRenderer])
 
 export default {
   name: 'PracticeStats',
@@ -110,6 +152,7 @@ export default {
 
     const equityCurveOption = computed(() => {
       const curve = practiceStore.stats?.equity_curve || []
+      const initialCapital = practiceStore.stats?.initial_capital || 0
       return {
         backgroundColor: '#131722',
         grid: { left: 65, right: 20, top: 20, bottom: 30 },
@@ -136,7 +179,20 @@ export default {
               ]
             }
           },
-          symbol: 'none'
+          symbol: 'none',
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: '#787b86', type: 'dashed', width: 1 },
+            label: {
+              show: true,
+              position: 'insideEndTop',
+              formatter: '初始资金',
+              color: '#787b86',
+              fontSize: 11
+            },
+            data: [{ yAxis: initialCapital }]
+          }
         }]
       }
     })
@@ -156,10 +212,16 @@ export default {
       return pct > 0 ? 'text-red' : pct < 0 ? 'text-green' : ''
     })
 
+    const drawdownClass = computed(() => {
+      const dd = practiceStore.stats?.max_drawdown_pct
+      if (dd == null || dd === 0) return ''
+      return 'text-green' // drawdown is negative, show in loss color
+    })
+
     function formatMoney(n) {
       if (n == null) return '--'
       const abs = Math.abs(n)
-      if (abs >= 10000) return (n / 10000).toFixed(2) + '万'
+      if (abs >= 10000) return (n < 0 ? '-' : '') + (abs / 10000).toFixed(2) + '万'
       return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
 
@@ -168,13 +230,21 @@ export default {
       return (v > 0 ? '+' : '') + v.toFixed(2) + '%'
     }
 
+    function formatProfitFactor(v) {
+      if (v == null) return '--'
+      if (!isFinite(v)) return '∞'
+      return v.toFixed(2)
+    }
+
     return {
       practiceStore,
       equityCurveOption,
       buySellMarkers,
       returnClass,
+      drawdownClass,
       formatMoney,
-      formatPct
+      formatPct,
+      formatProfitFactor
     }
   }
 }
@@ -199,8 +269,12 @@ export default {
 .metrics-row {
   display: flex;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
+
+  &.tier-1 {
+    margin-bottom: 12px;
+  }
 }
 
 .metric-card {
@@ -211,12 +285,29 @@ export default {
   border-radius: 6px;
   border: 1px solid $border-color;
   text-align: center;
-  .metric-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: $text-primary;
-    margin-bottom: 6px;
+
+  &.primary {
+    min-width: 160px;
+    .metric-value {
+      font-size: 24px;
+      font-weight: 600;
+    }
   }
+
+  &.secondary {
+    min-width: 120px;
+    padding: 12px 16px;
+    .metric-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+
+  .metric-value {
+    color: $text-primary;
+    margin-bottom: 4px;
+  }
+
   .metric-label {
     font-size: 12px;
     color: $text-secondary;
@@ -225,6 +316,13 @@ export default {
 
 .text-red { color: #ef5350; }
 .text-green { color: #26a69a; }
+
+.drawdown-info {
+  color: $color-down;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: right;
+}
 
 .chart-section {
   margin-bottom: 24px;
