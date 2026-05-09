@@ -8,15 +8,57 @@ A 股量价分析学习工具，通过 tushare 获取日 K 数据，结合量价
 - **后端**: Python FastAPI + SQLAlchemy + tushare
 - **数据库**: SQLite
 
+## 环境准备
+
+### Miniconda 安装（推荐）
+
+1. 下载安装 Miniconda：[https://docs.conda.io/en/latest/miniconda.html](https://docs.conda.io/en/latest/miniconda.html)
+
+   **macOS:**
+   ```bash
+   brew install --cask miniconda
+   conda init zsh  # 或 bash，取决于你使用的 shell
+   ```
+   重启终端后生效。
+
+   **Windows:**
+   下载安装包运行即可，安装时勾选 "Add Miniconda to PATH"。
+
+2. 创建并激活项目环境：
+   ```bash
+   conda create -n volume-price python=3.12
+   conda activate volume-price
+   ```
+
+### Node.js
+
+确保已安装 Node.js 18+，推荐使用 [nvm](https://github.com/nvm-sh/nvm) 管理版本：
+```bash
+nvm install 18
+nvm use 18
+```
+
 ## 启动方式
 
 ### 1. 后端
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+conda activate volume-price
 pip install -r requirements.txt
+```
+
+在 `backend/` 目录下创建 `.env` 文件，配置 tushare token：
+
+```
+TUSHARE_TOKEN=你的token
+```
+
+可在 [tushare.pro](https://tushare.pro) 注册获取。
+
+启动服务：
+
+```bash
 python run.py
 ```
 
@@ -31,16 +73,6 @@ npm run dev
 ```
 
 前端运行在 http://localhost:5173
-
-### 3. 数据源
-
-项目使用 tushare 获取 A 股日 K 线数据，需要在 `backend/.env` 中配置自己的 tushare token：
-
-```
-TUSHARE_TOKEN=你的token
-```
-
-可在 [tushare.pro](https://tushare.pro) 注册获取。
 
 ## 功能模块
 
