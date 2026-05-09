@@ -42,3 +42,7 @@ frontend/dist/
 
 # Environment
 .env
+
+# Claude Code / GSD artifacts
+.claude/
+.planning/

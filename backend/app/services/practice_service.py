@@ -6,9 +6,10 @@ and performance statistics computation.
 """
 
 import logging
+import math
 from datetime import datetime
 
-from sqlalchemy import select, and_
+from sqlalchemy import delete as sql_delete, func, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import DailyBar, Position, PracticeSession, Stock, Trade
@@ -335,16 +336,15 @@ class PracticeService:
         }
 
     async def buy_order(
-        self, session_id: int, shares: int, price: float
+        self, session_id: int, shares: int
     ) -> dict:
-        """Execute a buy order.
+        """Execute a buy order at the current bar's close price.
 
         Enforces price limits based on stock type and available cash.
 
         Args:
             session_id: Practice session ID.
             shares: Number of shares to buy (must be multiple of 100).
-            price: Limit price for the buy order.
 
         Returns:
             Dict with trade details and confirmation message.
@@ -356,17 +356,7 @@ class PracticeService:
         if session.status != "active":
             raise ValueError("练习已结束")
 
-        # Get stock info for price limit calculation
-        stock_result = await self.db.execute(
-            select(Stock).where(Stock.ts_code == session.ts_code)
-        )
-        stock = stock_result.scalar_one_or_none()
-        stock_name = stock.name if stock else ""
-
-        # Determine price limit percentage
-        limit_pct = self._get_price_limit_pct(stock_name, session.ts_code)
-
-        # Get current bar for pre_close
+        # Get current bar for price
         bar_result = await self.db.execute(
             select(DailyBar).where(
                 DailyBar.ts_code == session.ts_code,
@@ -376,6 +366,19 @@ class PracticeService:
         current_bar = bar_result.scalar_one_or_none()
         if not current_bar:
             raise ValueError("当前日期无行情数据")
+
+        # Use close price as execution price
+        price = current_bar.close
+
+        # Get stock info for price limit calculation
+        stock_result = await self.db.execute(
+            select(Stock).where(Stock.ts_code == session.ts_code)
+        )
+        stock = stock_result.scalar_one_or_none()
+        stock_name = stock.name if stock else ""
+
+        # Determine price limit percentage
+        limit_pct = self._get_price_limit_pct(stock_name, session.ts_code)
 
         pre_close = current_bar.pre_close if current_bar.pre_close else current_bar.close
 
@@ -450,9 +453,8 @@ class PracticeService:
         session_id: int,
         position_id: int,
         shares: int,
-        price: float,
     ) -> dict:
-        """Execute a sell order.
+        """Execute a sell order at the current bar's close price.
 
         Enforces T+1 rule, price limits, and position availability.
 
@@ -460,7 +462,6 @@ class PracticeService:
             session_id: Practice session ID.
             position_id: Position to sell from.
             shares: Number of shares to sell.
-            price: Limit price for the sell order.
 
         Returns:
             Dict with trade details and confirmation message.
@@ -493,15 +494,7 @@ class PracticeService:
                 f"可卖数量不足，当前可卖 {position.remaining_shares} 股"
             )
 
-        # Get stock info for price limit
-        stock_result = await self.db.execute(
-            select(Stock).where(Stock.ts_code == session.ts_code)
-        )
-        stock = stock_result.scalar_one_or_none()
-        stock_name = stock.name if stock else ""
-        limit_pct = self._get_price_limit_pct(stock_name, session.ts_code)
-
-        # Get current bar for pre_close
+        # Get current bar for price
         bar_result = await self.db.execute(
             select(DailyBar).where(
                 DailyBar.ts_code == session.ts_code,
@@ -511,6 +504,17 @@ class PracticeService:
         current_bar = bar_result.scalar_one_or_none()
         if not current_bar:
             raise ValueError("当前日期无行情数据")
+
+        # Use close price as execution price
+        price = current_bar.close
+
+        # Get stock info for price limit
+        stock_result = await self.db.execute(
+            select(Stock).where(Stock.ts_code == session.ts_code)
+        )
+        stock = stock_result.scalar_one_or_none()
+        stock_name = stock.name if stock else ""
+        limit_pct = self._get_price_limit_pct(stock_name, session.ts_code)
 
         pre_close = current_bar.pre_close if current_bar.pre_close else current_bar.close
 
@@ -585,6 +589,160 @@ class PracticeService:
         await self.db.commit()
 
         return {"status": "finished", "message": "练习已结束"}
+
+    async def list_sessions(
+        self,
+        status: str = None,
+        ts_code: str = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
+        """List practice sessions with optional filtering.
+
+        Args:
+            status: Filter by status (active/finished).
+            ts_code: Filter by stock code.
+            limit: Max number of sessions to return.
+            offset: Number of sessions to skip.
+
+        Returns:
+            Dict with list of session summaries and total count.
+        """
+        query = select(PracticeSession).order_by(
+            PracticeSession.created_at.desc()
+        )
+        count_query = select(PracticeSession)
+
+        if status:
+            query = query.where(PracticeSession.status == status)
+            count_query = count_query.where(PracticeSession.status == status)
+        if ts_code:
+            query = query.where(PracticeSession.ts_code == ts_code)
+            count_query = count_query.where(PracticeSession.ts_code == ts_code)
+
+        # Get total count
+        count_result = await self.db.execute(
+            select(func.count()).select_from(count_query.subquery())
+        )
+        total = count_result.scalar() or 0
+
+        # Get paginated results
+        result = await self.db.execute(
+            query.offset(offset).limit(limit)
+        )
+        sessions = result.scalars().all()
+
+        # Enrich with stock names and computed fields
+        session_list = []
+        for s in sessions:
+            stock_result = await self.db.execute(
+                select(Stock).where(Stock.ts_code == s.ts_code)
+            )
+            stock = stock_result.scalar_one_or_none()
+
+            # Compute return_pct: need final market value
+            # Get last bar up to current_date for market value of open positions
+            open_positions_result = await self.db.execute(
+                select(Position).where(
+                    Position.session_id == s.id,
+                    Position.remaining_shares > 0,
+                )
+            )
+            open_positions = open_positions_result.scalars().all()
+
+            final_market_value = 0.0
+            if open_positions:
+                last_bar_result = await self.db.execute(
+                    select(DailyBar)
+                    .where(
+                        DailyBar.ts_code == s.ts_code,
+                        DailyBar.trade_date <= s.current_date,
+                    )
+                    .order_by(DailyBar.trade_date.desc())
+                    .limit(1)
+                )
+                last_bar = last_bar_result.scalar_one_or_none()
+                if last_bar:
+                    for pos in open_positions:
+                        final_market_value += pos.remaining_shares * last_bar.close
+
+            total_assets = s.cash + final_market_value
+            return_pct = (
+                round((total_assets - s.initial_capital) / s.initial_capital * 100, 2)
+                if s.initial_capital > 0
+                else 0
+            )
+
+            # Count trades
+            trade_count_q = await self.db.execute(
+                select(func.count(Trade.id)).where(Trade.session_id == s.id)
+            )
+            trade_count = trade_count_q.scalar() or 0
+
+            session_list.append(
+                {
+                    "id": s.id,
+                    "ts_code": s.ts_code,
+                    "stock_name": stock.name if stock else "",
+                    "start_date": s.start_date,
+                    "end_date": s.end_date,
+                    "initial_capital": s.initial_capital,
+                    "cash": round(s.cash, 2),
+                    "current_date": s.current_date,
+                    "status": s.status,
+                    "notes": s.notes,
+                    "created_at": s.created_at,
+                    "return_pct": return_pct,
+                    "trade_count": trade_count,
+                }
+            )
+
+        return {"items": session_list, "total": total}
+
+    async def delete_session(self, session_id: int) -> dict:
+        """Delete a practice session and all associated data.
+
+        Args:
+            session_id: Practice session ID.
+
+        Returns:
+            Dict with deletion confirmation.
+
+        Raises:
+            ValueError: If session not found.
+        """
+        session = await self._get_session_or_raise(session_id)
+
+        # Delete associated trades and positions first (cascade)
+        await self.db.execute(
+            sql_delete(Trade).where(Trade.session_id == session_id)
+        )
+        await self.db.execute(
+            sql_delete(Position).where(Position.session_id == session_id)
+        )
+        await self.db.delete(session)
+        await self.db.commit()
+
+        return {"status": "deleted", "message": f"练习会话 {session_id} 已删除"}
+
+    async def update_session_notes(self, session_id: int, notes: str) -> dict:
+        """Update notes for a practice session.
+
+        Args:
+            session_id: Practice session ID.
+            notes: New notes content.
+
+        Returns:
+            Dict with updated notes.
+
+        Raises:
+            ValueError: If session not found.
+        """
+        session = await self._get_session_or_raise(session_id)
+        session.notes = notes
+        await self.db.commit()
+
+        return {"status": "updated", "notes": notes}
 
     async def get_stats(self, session_id: int) -> dict:
         """Compute comprehensive trading statistics.
@@ -694,7 +852,9 @@ class PracticeService:
         if gross_loss > 0:
             profit_factor = round(gross_profit / gross_loss, 2)
         elif total_trades > 0:
-            profit_factor = float("inf")
+            # All trades are winners: no meaningful profit factor ratio.
+            # Use None instead of float('inf') because JSON cannot serialize inf.
+            profit_factor = None
         else:
             profit_factor = 0
 
@@ -711,7 +871,9 @@ class PracticeService:
             cumulative_pnl += pair["profit_amount"]
             pair["cumulative_pnl"] = round(cumulative_pnl, 2)
 
-        return {
+        total_fees = round(total_commission + total_stamp_tax, 2)
+
+        result = {
             "ts_code": session.ts_code,
             "start_date": session.start_date,
             "end_date": session.end_date,
@@ -720,11 +882,13 @@ class PracticeService:
             "total_return": round(total_return, 2),
             "total_return_pct": total_return_pct,
             "total_trades": total_trades,
+            "trade_count": total_trades,
             "win_count": win_count,
             "loss_count": loss_count,
             "win_rate": win_rate,
             "total_commission": round(total_commission, 2),
             "total_stamp_tax": round(total_stamp_tax, 2),
+            "total_fees": total_fees,
             "trade_pairs": trade_pairs,
             "equity_curve": equity_curve,
             "all_trades": [
@@ -756,7 +920,35 @@ class PracticeService:
             "avg_holding_days": avg_holding_days,
         }
 
+        # Safety net: replace any remaining inf/nan with None
+        return self._sanitize_floats(result)
+
     # --- Private helper methods ---
+
+    @staticmethod
+    def _sanitize_floats(obj):
+        """Recursively replace inf/nan floats in a data structure.
+
+        Replaces float('inf'), float('-inf'), and float('nan') with None.
+        Traverses dicts, lists, and tuples recursively.
+
+        Args:
+            obj: Any Python object.
+
+        Returns:
+            Sanitized copy with non-finite floats replaced by None.
+        """
+        if isinstance(obj, float):
+            if not math.isfinite(obj):
+                return None
+            return obj
+        if isinstance(obj, dict):
+            return {k: PracticeService._sanitize_floats(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [PracticeService._sanitize_floats(v) for v in obj]
+        if isinstance(obj, tuple):
+            return tuple(PracticeService._sanitize_floats(v) for v in obj)
+        return obj
 
     async def _get_session_or_raise(self, session_id: int) -> PracticeSession:
         """Fetch session or raise ValueError if not found."""
@@ -858,6 +1050,8 @@ class PracticeService:
                         "sell_date": sell.trade_date,
                         "sell_price": sell.price,
                         "sell_shares": matched,
+                        "shares": matched,
+                        "profit": round(profit_amount, 2),
                         "profit_amount": round(profit_amount, 2),
                         "profit_pct": profit_pct,
                         "holding_days": holding_days,
